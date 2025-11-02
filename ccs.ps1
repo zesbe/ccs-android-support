@@ -79,7 +79,14 @@ $SettingsPath = $SettingsPath -replace '/', '\'
 if (-not (Test-Path $SettingsPath)) {
     Write-Host "Error: Settings file not found: $SettingsPath" -ForegroundColor Red
     Write-Host ""
-    Write-Host "Create the settings file or update the path in $ConfigFile"
+    Write-Host "Solutions:" -ForegroundColor Yellow
+    Write-Host "  1. Create the settings file with empty env:"
+    Write-Host "     New-Item -ItemType File -Force -Path '$SettingsPath'"
+    Write-Host "     Set-Content -Path '$SettingsPath' -Value '{`"env`":{}}`'"
+    Write-Host ""
+    Write-Host "  2. Or update profile path in $ConfigFile"
+    Write-Host ""
+    Write-Host "  3. Or reinstall: irm ccs.kaitran.ca/install.ps1 | iex"
     exit 1
 }
 
@@ -89,6 +96,15 @@ try {
     $Settings = $SettingsContent | ConvertFrom-Json -ErrorAction Stop
 } catch {
     Write-Host "Error: Invalid JSON in $SettingsPath" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Details: $_" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Solutions:" -ForegroundColor Yellow
+    Write-Host "  1. Validate JSON at https://jsonlint.com"
+    Write-Host "  2. Or reset to template:"
+    Write-Host "     Set-Content -Path '$SettingsPath' -Value '{`"env`":{}}`'"
+    Write-Host ""
+    Write-Host "  3. Or reinstall: irm ccs.kaitran.ca/install.ps1 | iex"
     exit 1
 }
 

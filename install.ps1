@@ -232,6 +232,16 @@ if (-not (Test-Path $SonnetSettings)) {
     Write-Host "|  [OK] Sonnet profile exists: $SonnetSettings"
 }
 
+# Ensure default profile settings file exists
+$DefaultSettings = "$ClaudeDir\settings.json"
+if (-not (Test-Path $DefaultSettings)) {
+    New-Item -ItemType Directory -Force -Path $ClaudeDir | Out-Null
+    @{ env = @{} } | ConvertTo-Json -Depth 10 | Set-Content $DefaultSettings
+    Write-Host "|  [OK] Created default settings: $DefaultSettings"
+} else {
+    Write-Host "|  [OK] Default profile exists: $DefaultSettings"
+}
+
 Write-Host "└─"
 Write-Host ""
 
