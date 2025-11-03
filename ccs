@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Version (updated by scripts/bump-version.sh)
-CCS_VERSION="2.2.2"
+CCS_VERSION="2.2.3"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # --- Color/Format Functions ---
@@ -138,6 +138,86 @@ Solution:
   echo "Example: /ccs glm /plan 'add user authentication'"
 }
 
+# Uninstallation function for commands and skills
+uninstall_commands_and_skills() {
+  local target_dir="$HOME/.claude"
+  local removed_count=0
+  local not_found_count=0
+
+  echo "┌─ Uninstalling CCS Commands & Skills"
+  echo "│  Target: $target_dir"
+  echo "│"
+
+  # Check if target directory exists
+  if [[ ! -d "$target_dir" ]]; then
+    echo "|"
+    echo "│  [i]  Claude directory not found: $target_dir"
+    echo "│       Nothing to uninstall."
+    echo "└─"
+    echo ""
+    echo "[OK] Uninstall complete!"
+    echo "  Removed: 0 items (nothing was installed)"
+    return 0
+  fi
+
+  # Remove commands
+  local commands_dir="$target_dir/commands"
+  if [[ -d "$commands_dir" ]]; then
+    echo "│  Removing commands..."
+    for cmd_file in "$commands_dir"/ccs.md; do
+      if [[ -f "$cmd_file" ]]; then
+        local cmd_name=$(basename "$cmd_file" .md)
+        if rm "$cmd_file"; then
+          echo "|  |  [OK]  Removed command: $cmd_name.md"
+          removed_count=$((removed_count + 1))
+        else
+          echo "|  |  [X]  Failed to remove command: $cmd_name.md"
+        fi
+      else
+        echo "|  |  [i]  CCS command not found"
+        not_found_count=$((not_found_count + 1))
+      fi
+    done
+  else
+    echo "│  [i]  Commands directory not found"
+    not_found_count=$((not_found_count + 1))
+  fi
+
+  echo "|"
+
+  # Remove skills
+  local skills_dir="$target_dir/skills"
+  if [[ -d "$skills_dir" ]]; then
+    echo "|  Removing skills..."
+    for skill_dir in "$skills_dir"/ccs-delegation; do
+      if [[ -d "$skill_dir" ]]; then
+        local skill_name=$(basename "$skill_dir")
+        if rm -rf "$skill_dir"; then
+          echo "|  |  [OK]  Removed skill: $skill_name"
+          removed_count=$((removed_count + 1))
+        else
+          echo "|  |  [X]  Failed to remove skill: $skill_name"
+        fi
+      else
+        echo "|  |  [i]  CCS skill not found"
+        not_found_count=$((not_found_count + 1))
+      fi
+    done
+  else
+    echo "│  [i]  Skills directory not found"
+    not_found_count=$((not_found_count + 1))
+  fi
+
+  echo "└─"
+  echo ""
+  echo "[OK] Uninstall complete!"
+  echo "  Removed: $removed_count items"
+  echo "  Not found: $not_found_count items (already removed)"
+  echo ""
+  echo "The /ccs command is no longer available in Claude CLI."
+  echo "To reinstall: ccs --install"
+}
+
 # Special case: version command (check BEFORE profile detection)
 if [[ $# -gt 0 ]] && [[ "${1}" == "version" || "${1}" == "--version" || "${1}" == "-v" ]]; then
   echo "CCS (Claude Code Switch) version $CCS_VERSION"
@@ -167,6 +247,12 @@ fi
 # Special case: install command (check BEFORE profile detection)
 if [[ $# -gt 0 ]] && [[ "${1}" == "--install" ]]; then
   install_commands_and_skills
+  exit $?
+fi
+
+# Special case: uninstall command (check BEFORE profile detection)
+if [[ $# -gt 0 ]] && [[ "${1}" == "--uninstall" ]]; then
+  uninstall_commands_and_skills
   exit $?
 fi
 

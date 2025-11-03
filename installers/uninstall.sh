@@ -26,7 +26,7 @@ selective_cleanup() {
   local removed=()
   local kept=()
 
-  # Remove executables and version metadata
+  # Remove executables, version metadata, and .claude folder
   for file in "ccs" "uninstall.sh" "VERSION"; do
     if [[ -f "$ccs_dir/$file" ]]; then
       rm "$ccs_dir/$file"
@@ -34,13 +34,18 @@ selective_cleanup() {
     fi
   done
 
+  # Remove .claude folder
+  if [[ -d "$ccs_dir/.claude" ]]; then
+    rm -rf "$ccs_dir/.claude"
+    removed+=(".claude/")
+  fi
+
   # Track kept files
   [[ -f "$ccs_dir/config.json" ]] && kept+=("config.json")
   [[ -f "$ccs_dir/config.json.backup" ]] && kept+=("config.json.backup")
   for settings in "$ccs_dir"/*.settings.json; do
     [[ -f "$settings" ]] && kept+=("$(basename "$settings")")
   done
-  [[ -d "$ccs_dir/.claude" ]] && kept+=(".claude/")
 
   # Report results
   if [[ ${#removed[@]} -gt 0 ]]; then

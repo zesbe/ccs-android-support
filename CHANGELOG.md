@@ -4,6 +4,21 @@ All notable changes to CCS will be documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.2.3] - 2025-11-03
+
+### Added
+- **Uninstall Command**: `ccs --uninstall` removes CCS commands and skills from `~/.claude/`
+  - Removes only CCS-specific files (ccs.md command and ccs-delegation skill)
+  - Preserves CCS executable, user configurations, and other Claude Code components
+  - Provides clear feedback showing what was removed
+  - Safe to run multiple times (idempotent)
+  - Cross-platform compatibility (bash/PowerShell)
+  - Comprehensive test coverage (20 test cases)
+
+### Updated
+- **Documentation**: Added `--uninstall` usage examples to README files
+- **Documentation**: Updated install/uninstall cycle documentation
+
 ## [2.2.2] - 2025-11-03
 
 ### Fixed

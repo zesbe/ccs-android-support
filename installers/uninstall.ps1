@@ -38,13 +38,18 @@ function Invoke-SelectiveCleanup {
         }
     }
 
+    # Remove .claude folder
+    if (Test-Path "$CcsDir\.claude") {
+        Remove-Item "$CcsDir\.claude" -Recurse -Force
+        $Removed += ".claude/"
+    }
+
     # Track kept files
     if (Test-Path "$CcsDir\config.json") { $Kept += "config.json" }
     if (Test-Path "$CcsDir\config.json.backup") { $Kept += "config.json.backup" }
     Get-ChildItem "$CcsDir\*.settings.json" -ErrorAction SilentlyContinue | ForEach-Object {
         $Kept += $_.Name
     }
-    if (Test-Path "$CcsDir\.claude") { $Kept += ".claude/" }
 
     # Report results
     if ($Removed.Count -gt 0) {

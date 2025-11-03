@@ -25,7 +25,7 @@ function Write-ErrorMsg {
 }
 
 # Version (updated by scripts/bump-version.sh)
-$CcsVersion = "2.2.2"
+$CcsVersion = "2.2.3"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 # Installation function for commands and skills
@@ -44,7 +44,8 @@ function Install-CommandsAndSkills {
         }
     }
 
-    $TargetDir = Join-Path $env:USERPROFILE ".claude"
+    $HomeDir = if ($env:HOME) { $env:HOME } else { $env:USERPROFILE }
+    $TargetDir = Join-Path $HomeDir ".claude"
 
     Write-Host "[Installing CCS Commands & Skills]" -ForegroundColor Cyan
     Write-Host "|  Source: $SourceDir"
@@ -146,6 +147,87 @@ Solution:
     Write-Host "Example: /ccs glm /plan 'add user authentication'" -ForegroundColor Cyan
 }
 
+# Uninstallation function for commands and skills
+function Uninstall-CommandsAndSkills {
+    $HomeDir = if ($env:HOME) { $env:HOME } else { $env:USERPROFILE }
+    $TargetDir = Join-Path $HomeDir ".claude"
+    $RemovedCount = 0
+    $NotFoundCount = 0
+
+    Write-Host "[Uninstalling CCS Commands & Skills]" -ForegroundColor Cyan
+    Write-Host "|  Target: $TargetDir"
+    Write-Host "|"
+
+    # Check if target directory exists
+    if (-not (Test-Path $TargetDir)) {
+        Write-Host "|"
+        Write-Host "|  [i]  Claude directory not found: $TargetDir" -ForegroundColor Gray
+        Write-Host "|       Nothing to uninstall."
+        Write-Host "[DONE]"
+        Write-Host ""
+        Write-Host "[OK] Uninstall complete!" -ForegroundColor Green
+        Write-Host "  Removed: 0 items (nothing was installed)"
+        return
+    }
+
+    # Remove commands
+    $CommandsDir = Join-Path $TargetDir "commands"
+    if (Test-Path $CommandsDir) {
+        Write-Host "|  Removing commands..." -ForegroundColor Yellow
+        $CmdFile = Join-Path $CommandsDir "ccs.md"
+        if (Test-Path $CmdFile) {
+            try {
+                Remove-Item $CmdFile -Force -ErrorAction Stop
+                Write-Host "|  |  [OK] Removed command: ccs.md" -ForegroundColor Green
+                $RemovedCount++
+            } catch {
+                Write-Host "|  |  [!] Failed to remove command: ccs.md" -ForegroundColor Red
+                Write-Host "|       Error: $($_.Exception.Message)" -ForegroundColor Red
+            }
+        } else {
+            Write-Host "|  |  [i]  CCS command not found" -ForegroundColor Gray
+            $NotFoundCount++
+        }
+    } else {
+        Write-Host "|  [i]  Commands directory not found" -ForegroundColor Gray
+        $NotFoundCount++
+    }
+
+    Write-Host "|"
+
+    # Remove skills
+    $SkillsDir = Join-Path $TargetDir "skills"
+    if (Test-Path $SkillsDir) {
+        Write-Host "|  Removing skills..." -ForegroundColor Yellow
+        $SkillDir = Join-Path $SkillsDir "ccs-delegation"
+        if (Test-Path $SkillDir) {
+            try {
+                Remove-Item $SkillDir -Recurse -Force -ErrorAction Stop
+                Write-Host "|  |  [OK] Removed skill: ccs-delegation" -ForegroundColor Green
+                $RemovedCount++
+            } catch {
+                Write-Host "|  |  [!] Failed to remove skill: ccs-delegation" -ForegroundColor Red
+                Write-Host "|       Error: $($_.Exception.Message)" -ForegroundColor Red
+            }
+        } else {
+            Write-Host "|  |  [i]  CCS skill not found" -ForegroundColor Gray
+            $NotFoundCount++
+        }
+    } else {
+        Write-Host "|  [i]  Skills directory not found" -ForegroundColor Gray
+        $NotFoundCount++
+    }
+
+    Write-Host "[DONE]"
+    Write-Host ""
+    Write-Host "[OK] Uninstall complete!" -ForegroundColor Green
+    Write-Host "  Removed: $RemovedCount items"
+    Write-Host "  Not found: $NotFoundCount items (already removed)"
+    Write-Host ""
+    Write-Host "The /ccs command is no longer available in Claude CLI." -ForegroundColor Cyan
+    Write-Host "To reinstall: ccs --install" -ForegroundColor Cyan
+}
+
 # Special case: version command (check BEFORE profile detection)
 # Check both $ProfileOrFlag and first element of $RemainingArgs
 $FirstArg = if ($ProfileOrFlag -ne "default") { $ProfileOrFlag } elseif ($RemainingArgs.Count -gt 0) { $RemainingArgs[0] } else { $null }
@@ -181,6 +263,12 @@ if ($FirstArg -eq "--help" -or $FirstArg -eq "-h" -or $FirstArg -eq "help") {
 # Special case: install command (check BEFORE profile detection)
 if ($FirstArg -eq "--install") {
     Install-CommandsAndSkills
+    exit $LASTEXITCODE
+}
+
+# Special case: uninstall command (check BEFORE profile detection)
+if ($FirstArg -eq "--uninstall") {
+    Uninstall-CommandsAndSkills
     exit $LASTEXITCODE
 }
 

@@ -54,12 +54,19 @@ ccs              # Dùng Claude subscription (mặc định)
 ccs glm          # Dùng GLM fallback
 ccs --version    # Hiển thị phiên bản CCS
 ccs --install    # Cài đặt lệnh và kỹ năng CCS vào ~/.claude/
+ccs --uninstall  # Gỡ bỏ lệnh và kỹ năng CCS khỏi ~/.claude/
 ```
 
 ### Delegation Tác Vụ
 
 CCS bao gồm delegation tác vụ thông minh qua meta-command `/ccs`:
 
+**Cài đặt lệnh CCS:**
+```bash
+ccs --install    # Cài đặt lệnh /ccs vào Claude CLI
+```
+
+**Sử dụng delegation tác vụ:**
 ```bash
 # Sau khi chạy ccs --install, bạn có thể dùng:
 /ccs glm /plan "add user authentication"
@@ -67,10 +74,16 @@ CCS bao gồm delegation tác vụ thông minh qua meta-command `/ccs`:
 /ccs glm /ask "explain this error"
 ```
 
+**Gỡ bỏ khi không cần:**
+```bash
+ccs --uninstall  # Gỡ bỏ lệnh /ccs khỏi Claude CLI
+```
+
 **Lợi ích**:
 - ✅ Tiết kiệm tokens bằng cách delegation tác vụ đơn giản cho model rẻ hơn
 - ✅ Dùng đúng model cho từng tác vụ tự động
 - ✅ Tích hợp liền mạch với workflows hiện có
+- ✅ Cài đặt và gỡ bỏ sạch sẽ khi cần
 
 ## Triết Lý
 
