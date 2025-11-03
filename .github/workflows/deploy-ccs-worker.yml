@@ -1,0 +1,28 @@
+name: Deploy CCS CloudFlare Worker
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/worker.js'
+      - 'installers/**'
+
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy ccs-installer to CloudFlare
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: scripts
+          command: deploy worker.js --name ccs-installer

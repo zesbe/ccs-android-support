@@ -111,7 +111,7 @@ Nếu bạn có cả Claude subscription và GLM Coding Plan, bạn biết cái 
 curl -fsSL ccs.kaitran.ca/install | bash
 
 # Hoặc trực tiếp từ GitHub
-curl -fsSL https://raw.githubusercontent.com/kaitranntt/ccs/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/kaitranntt/ccs/main/installers/install.sh | bash
 ```
 
 **Windows PowerShell**:
@@ -120,7 +120,7 @@ curl -fsSL https://raw.githubusercontent.com/kaitranntt/ccs/main/install.sh | ba
 irm ccs.kaitran.ca/install.ps1 | iex
 
 # Hoặc trực tiếp từ GitHub
-irm https://raw.githubusercontent.com/kaitranntt/ccs/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/kaitranntt/ccs/main/installers/install.ps1 | iex
 ```
 
 **Lưu ý**:
@@ -133,14 +133,14 @@ irm https://raw.githubusercontent.com/kaitranntt/ccs/main/install.ps1 | iex
 ```bash
 git clone https://github.com/kaitranntt/ccs.git
 cd ccs
-./install.sh
+./installers/install.sh
 ```
 
 **Windows PowerShell**:
 ```powershell
 git clone https://github.com/kaitranntt/ccs.git
 cd ccs
-.\install.ps1
+.\installers\install.ps1
 ```
 
 **Lưu ý**: Hoạt động với git worktrees và submodules - installer phát hiện cả `.git` directory và `.git` file.
@@ -231,9 +231,7 @@ Mỗi profile trỏ đến một file settings JSON của Claude. Tạo file set
 
 ### Cấu Hình Windows
 
-**Quan trọng**: Claude CLI trên Windows dùng **biến môi trường** thay vì --settings flag.
-
-Windows dùng cùng cấu trúc file như Linux, nhưng settings files chứa environment variables:
+Windows dùng cùng cấu trúc file và phương pháp như Linux/macOS.
 
 **Config format** (`~/.ccs/config.json`):
 ```json
@@ -249,12 +247,14 @@ Windows dùng cùng cấu trúc file như Linux, nhưng settings files chứa en
 **GLM profile** (`~/.ccs/glm.settings.json`):
 ```json
 {
-  "ANTHROPIC_BASE_URL": "https://api.z.ai/api/anthropic",
-  "ANTHROPIC_AUTH_TOKEN": "GLM_API_KEY_CUA_BAN",
-  "ANTHROPIC_MODEL": "glm-4.6",
-  "ANTHROPIC_DEFAULT_OPUS_MODEL": "glm-4.6",
-  "ANTHROPIC_DEFAULT_SONNET_MODEL": "glm-4.6",
-  "ANTHROPIC_DEFAULT_HAIKU_MODEL": "glm-4.6"
+  "env": {
+    "ANTHROPIC_BASE_URL": "https://api.z.ai/api/anthropic",
+    "ANTHROPIC_AUTH_TOKEN": "GLM_API_KEY_CUA_BAN",
+    "ANTHROPIC_MODEL": "glm-4.6",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "glm-4.6",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "glm-4.6",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "glm-4.6"
+  }
 }
 ```
 
@@ -266,12 +266,9 @@ Windows dùng cùng cấu trúc file như Linux, nhưng settings files chứa en
 ```
 
 **Cách hoạt động**:
-- CCS đọc settings file của profile được chọn
-- Tạm thời set biến môi trường từ settings file
-- Chạy Claude CLI với các biến đó
-- Khôi phục biến môi trường gốc sau khi thực thi
-
-**Tương thích**: Settings files hỗ trợ cả format trực tiếp (Windows) và wrapper `{"env": {...}}` (tương thích Linux).
+- CCS đọc config để tìm settings file của profile
+- Chạy `claude --settings <file>` với profile đã chọn
+- Đơn giản, rõ ràng, đa nền tảng
 
 ## Sử Dụng
 
@@ -554,7 +551,7 @@ ccs-uninstall
 curl -fsSL ccs.kaitran.ca/uninstall | bash
 
 # Hoặc trực tiếp từ GitHub
-curl -fsSL https://raw.githubusercontent.com/kaitranntt/ccs/main/uninstall.sh | bash
+curl -fsSL https://raw.githubusercontent.com/kaitranntt/ccs/main/installers/uninstall.sh | bash
 ```
 
 **Thủ công**:
@@ -577,7 +574,7 @@ ccs-uninstall
 irm ccs.kaitran.ca/uninstall.ps1 | iex
 
 # Hoặc trực tiếp từ GitHub
-irm https://raw.githubusercontent.com/kaitranntt/ccs/main/uninstall.ps1 | iex
+irm https://raw.githubusercontent.com/kaitranntt/ccs/main/installers/uninstall.ps1 | iex
 ```
 
 **Thủ công**:

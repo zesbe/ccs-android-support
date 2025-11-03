@@ -16,8 +16,8 @@ Manual switching is tedious and error-prone.
 
 **The Solution**:
 ```bash
-ccs son       # Complex refactoring? Use Claude Sonnet 4.5
-ccs glm       # Simple bug fix? Use GLM 4.6
+ccs           # Use Claude subscription (default)
+ccs glm       # Switch to GLM fallback
 # Hit rate limit? Switch instantly:
 ccs glm       # Continue working with GLM
 ```
@@ -38,25 +38,33 @@ curl -fsSL ccs.kaitran.ca/install | bash
 irm ccs.kaitran.ca/install.ps1 | iex
 ```
 
-**Configure**:
+**What Gets Installed**:
 ```bash
-# Edit with your profiles
-cat > ~/.ccs/config.json << 'EOF'
+~/.ccs/
+├── ccs                     # Main executable
+├── config.json             # Profile configuration
+├── glm.settings.json       # GLM profile
+└── .claude/                # Claude Code integration
+    ├── commands/ccs.md     # /ccs meta-command
+    └── skills/             # Delegation skills
+```
+
+**Configure**:
+```json
+# Installer creates config automatically
+# Config: ~/.ccs/config.json
 {
   "profiles": {
     "glm": "~/.ccs/glm.settings.json",
-    "son": "~/.ccs/sonnet.settings.json",
     "default": "~/.claude/settings.json"
   }
 }
-EOF
 ```
 
 **Use**:
 ```bash
-ccs              # Use default profile
-ccs glm          # Use GLM profile
-ccs son          # Use Sonnet profile
+ccs              # Use Claude subscription (default)
+ccs glm          # Use GLM fallback
 
 # Utility commands
 ccs --version    # Show CCS version
@@ -85,7 +93,7 @@ ccs --help       # Show Claude CLI help
 **With CCS**: Switch models based on task complexity, maximize quality while managing costs.
 
 ```bash
-ccs son       # Planning new feature architecture
+ccs           # Planning new feature architecture
 # Got the plan? Implement with GLM:
 ccs glm       # Write the straightforward code
 ```
@@ -98,7 +106,7 @@ If you have both Claude subscription and GLM Coding Plan, you know the pain:
 - Repeat 10x per day
 
 **CCS solves this**:
-- One command to switch: `ccs glm` or `ccs son`
+- One command to switch: `ccs` (default) or `ccs glm` (fallback)
 - Keep both configs saved as profiles
 - Switch in <1 second
 - No file editing, no copy-paste, no mistakes
@@ -110,6 +118,31 @@ If you have both Claude subscription and GLM Coding Plan, you know the pain:
 - Auto-creates configs during install
 - No proxies, no magic—just bash + jq
 
+## New: Task Delegation
+
+**CCS now includes intelligent task delegation** via the `/ccs` meta-command:
+
+```bash
+# Delegate planning to GLM (saves Sonnet tokens)
+/ccs glm /plan "add user authentication"
+
+# Delegate coding to GLM
+/ccs glm /code "implement auth endpoints"
+
+# Quick questions with Haiku
+/ccs haiku /ask "explain this error"
+```
+
+**Documentation**:
+- Command reference: [`commands/ccs.md`](commands/ccs.md)
+- Delegation patterns: [`skills/ccs-delegation.md`](skills/ccs-delegation.md)
+
+**Benefits**:
+- ✅ Save tokens by delegating simple tasks to cheaper models
+- ✅ Use right model for each task automatically
+- ✅ Reusable commands across all projects (user-scope)
+- ✅ Seamless integration with existing workflows
+
 ## Installation
 
 ### One-Liner (Recommended)
@@ -120,7 +153,7 @@ If you have both Claude subscription and GLM Coding Plan, you know the pain:
 curl -fsSL ccs.kaitran.ca/install | bash
 
 # Or direct from GitHub
-curl -fsSL https://raw.githubusercontent.com/kaitranntt/ccs/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/kaitranntt/ccs/main/installers/install.sh | bash
 ```
 
 **Windows PowerShell**:
@@ -129,7 +162,7 @@ curl -fsSL https://raw.githubusercontent.com/kaitranntt/ccs/main/install.sh | ba
 irm ccs.kaitran.ca/install.ps1 | iex
 
 # Or direct from GitHub
-irm https://raw.githubusercontent.com/kaitranntt/ccs/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/kaitranntt/ccs/main/installers/install.ps1 | iex
 ```
 
 **Note**:
@@ -142,14 +175,14 @@ irm https://raw.githubusercontent.com/kaitranntt/ccs/main/install.ps1 | iex
 ```bash
 git clone https://github.com/kaitranntt/ccs.git
 cd ccs
-./install.sh
+./installers/install.sh
 ```
 
 **Windows PowerShell**:
 ```powershell
 git clone https://github.com/kaitranntt/ccs.git
 cd ccs
-.\install.ps1
+.\installers\install.ps1
 ```
 
 **Note**: Works with git worktrees and submodules - the installer detects both `.git` directory and `.git` file.
@@ -201,8 +234,6 @@ git pull
 irm ccs.kaitran.ca/install.ps1 | iex
 ```
 
-**Note**: Upgrading preserves your existing API keys and settings. The installer only adds new features without overwriting your configuration.
-
 ## Configuration
 
 The installer auto-creates config and profile templates during installation:
@@ -218,7 +249,6 @@ Uses settings file paths:
 {
   "profiles": {
     "glm": "~/.ccs/glm.settings.json",
-    "sonnet": "~/.ccs/sonnet.settings.json",
     "default": "~/.claude/settings.json"
   }
 }
@@ -228,16 +258,13 @@ Each profile points to a Claude settings JSON file. Create settings files per [C
 
 ### Windows Configuration
 
-**Important**: Windows Claude CLI uses **environment variables** instead of --settings flag.
-
-Windows uses the same file structure as Linux, but settings files contain environment variables:
+Windows uses the same file structure and approach as Linux/macOS.
 
 **Config format** (`~/.ccs/config.json`):
 ```json
 {
   "profiles": {
     "glm": "~/.ccs/glm.settings.json",
-    "son": "~/.ccs/sonnet.settings.json",
     "default": "~/.claude/settings.json"
   }
 }
@@ -246,29 +273,25 @@ Windows uses the same file structure as Linux, but settings files contain enviro
 **GLM profile** (`~/.ccs/glm.settings.json`):
 ```json
 {
-  "ANTHROPIC_BASE_URL": "https://api.z.ai/api/anthropic",
-  "ANTHROPIC_AUTH_TOKEN": "your_glm_api_key",
-  "ANTHROPIC_MODEL": "glm-4.6",
-  "ANTHROPIC_DEFAULT_OPUS_MODEL": "glm-4.6",
-  "ANTHROPIC_DEFAULT_SONNET_MODEL": "glm-4.6",
-  "ANTHROPIC_DEFAULT_HAIKU_MODEL": "glm-4.6"
+  "env": {
+    "ANTHROPIC_BASE_URL": "https://api.z.ai/api/anthropic",
+    "ANTHROPIC_AUTH_TOKEN": "your_glm_api_key",
+    "ANTHROPIC_MODEL": "glm-4.6",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "glm-4.6",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "glm-4.6",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "glm-4.6"
+  }
 }
 ```
 
-**Claude profile** (`~/.ccs/sonnet.settings.json`):
-```json
-{
-  "env": {}
-}
-```
+**Claude (Default)**:
+- Uses `~/.claude/settings.json` (your existing Claude CLI config)
+- CCS never modifies this file (non-invasive approach)
 
 **How it works**:
-- CCS reads the settings file for the selected profile
-- Temporarily sets environment variables from the settings file
-- Executes Claude CLI with those variables
-- Restores original environment variables after execution
-
-**Compatibility**: Settings files support both direct format (Windows) and `{"env": {...}}` wrapper (Linux compatibility).
+- CCS reads the config to find your profile's settings file
+- Executes `claude --settings <file>` with your selected profile
+- Simple, clean, cross-platform
 
 ## Usage
 
@@ -276,9 +299,8 @@ Windows uses the same file structure as Linux, but settings files contain enviro
 
 ```bash
 # Works on macOS, Linux, and Windows
-ccs           # Use default profile (no args)
-ccs glm       # Use GLM profile
-ccs son       # Use Sonnet profile
+ccs           # Use Claude subscription (default)
+ccs glm       # Use GLM fallback
 ```
 
 **Windows Note**: Commands work identically in PowerShell, CMD, and Git Bash.
@@ -289,8 +311,8 @@ All args after profile name pass directly to Claude CLI:
 
 ```bash
 ccs glm --verbose
-ccs son /plan "add feature"
-ccs default --model claude-sonnet-4
+ccs /plan "add feature"
+ccs glm /code "implement feature"
 ```
 
 ### Custom Config Location
@@ -308,7 +330,7 @@ ccs glm
 
 ```bash
 # Step 1: Architecture & Planning (needs Claude's intelligence)
-ccs son
+ccs
 /plan "Design payment integration with Stripe, handle webhooks, errors, retries"
 # → Claude Sonnet 4.5 thinks deeply about edge cases, security, architecture
 
@@ -318,7 +340,7 @@ ccs glm
 # → GLM 4.6 writes the code efficiently, saves Claude usage
 
 # Step 3: Code Review (needs deep analysis)
-ccs son
+ccs
 /review "check the payment handler for security issues"
 # → Claude Sonnet 4.5 catches subtle vulnerabilities
 
@@ -334,7 +356,7 @@ ccs glm
 
 ```bash
 # Working on complex refactoring with Claude
-ccs son
+ccs
 /plan "refactor authentication system"
 
 # Claude hits rate limit mid-task
@@ -345,7 +367,7 @@ ccs glm
 # Continue working without interruption
 
 # Rate limit resets? Switch back
-ccs son
+ccs
 ```
 
 ### Configuration Examples
@@ -355,19 +377,18 @@ ccs son
 {
   "profiles": {
     "glm": "~/.ccs/glm.settings.json",
-    "sonnet": "~/.ccs/sonnet.settings.json",
     "default": "~/.claude/settings.json"
   }
 }
 ```
 
-**Advanced setup** (multiple providers):
+**Advanced setup** (multiple profiles):
 ```json
 {
   "profiles": {
-    "sonnet": "~/.ccs/sonnet.settings.json",
     "glm": "~/.ccs/glm.settings.json",
     "haiku": "~/.ccs/haiku.settings.json",
+    "custom": "~/.ccs/custom.settings.json",
     "default": "~/.claude/settings.json"
   }
 }
@@ -379,7 +400,7 @@ ccs son
 2. Looks up settings file path in `~/.ccs/config.json`
 3. Executes `claude --settings <path> [remaining-args]`
 
-No magic. No file modification. Pure delegation.
+No magic. No file modification. Pure delegation. Works identically across all platforms.
 
 ## Requirements
 
@@ -458,7 +479,7 @@ This error occurs when running the installer in some shells or environments.
 
 **Solution**: Upgrade to the latest version:
 ```bash
-curl -fsSL https://raw.githubusercontent.com/kaitranntt/ccs/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/kaitranntt/ccs/main/installers/install.sh | bash
 ```
 
 #### Git worktree not detected
@@ -533,14 +554,6 @@ Error: Profile 'default' not found in ~/.ccs/config.json
 }
 ```
 
-### Upgrade Issues
-
-#### API keys lost after upgrade
-
-**Not a problem**: The installer preserves existing API keys when upgrading. If you're using GLM, your API key is automatically preserved and the profile is enhanced with new default model variables.
-
-**Verification**: Check `~/.ccs/glm.settings.json` - your `ANTHROPIC_AUTH_TOKEN` should still be present.
-
 ## Uninstallation
 
 ### macOS / Linux
@@ -556,7 +569,7 @@ ccs-uninstall
 curl -fsSL ccs.kaitran.ca/uninstall | bash
 
 # Or direct from GitHub
-curl -fsSL https://raw.githubusercontent.com/kaitranntt/ccs/main/uninstall.sh | bash
+curl -fsSL https://raw.githubusercontent.com/kaitranntt/ccs/main/installers/uninstall.sh | bash
 ```
 
 **Manual**:
@@ -579,7 +592,7 @@ ccs-uninstall
 irm ccs.kaitran.ca/uninstall.ps1 | iex
 
 # Or direct from GitHub
-irm https://raw.githubusercontent.com/kaitranntt/ccs/main/uninstall.ps1 | iex
+irm https://raw.githubusercontent.com/kaitranntt/ccs/main/installers/uninstall.ps1 | iex
 ```
 
 **Manual**:

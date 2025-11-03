@@ -20,10 +20,31 @@ $ScriptDir = if ($MyInvocation.MyCommand.Path) {
     $null
 }
 
-$InstallMethod = if ($ScriptDir -and (Test-Path "$ScriptDir\ccs.ps1")) {
+$InstallMethod = if ($ScriptDir -and ((Test-Path "$ScriptDir\ccs.ps1") -or (Test-Path "$ScriptDir\..\ccs.ps1"))) {
     "git"
 } else {
     "standalone"
+}
+
+# Version configuration
+# IMPORTANT: Update this version when releasing new versions!
+# This hardcoded version is used for standalone installations (irm | iex)
+# For git installations, VERSION file is read if available
+$CcsVersion = "2.1.1"
+
+# Try to read VERSION file for git installations
+if ($ScriptDir) {
+    $VersionFile = if (Test-Path "$ScriptDir\VERSION") {
+        "$ScriptDir\VERSION"
+    } elseif (Test-Path "$ScriptDir\..\VERSION") {
+        "$ScriptDir\..\VERSION"
+    } else {
+        $null
+    }
+
+    if ($VersionFile -and (Test-Path $VersionFile)) {
+        $CcsVersion = (Get-Content $VersionFile -Raw).Trim()
+    }
 }
 
 # Helper Functions
@@ -62,11 +83,6 @@ function New-GlmTemplate {
     return $Template | ConvertTo-Json -Depth 10
 }
 
-function New-SonnetTemplate {
-    $Template = @{ env = @{} }
-    return $Template | ConvertTo-Json -Depth 10
-}
-
 function New-GlmProfile {
     param([string]$Provider)
 
@@ -86,7 +102,7 @@ function New-GlmProfile {
             $Config.env | Add-Member -NotePropertyName ANTHROPIC_DEFAULT_HAIKU_MODEL -NotePropertyValue $GlmModel -Force
 
             $Config | ConvertTo-Json -Depth 10 | Set-Content $GlmSettings
-            Write-Host "  Created: $GlmSettings (with your existing API key + enhanced settings)"
+            Write-Host "  Created: $GlmSettings with your existing API key + enhanced settings"
         } catch {
             Write-Host "  [i]  Copying current settings failed, using template"
             New-GlmTemplate | Set-Content $GlmSettings
@@ -99,44 +115,63 @@ function New-GlmProfile {
     }
 }
 
-function New-SonnetProfile {
-    param([string]$Provider)
+function Install-ClaudeFolder {
+    param(
+        [string]$SourceDir
+    )
 
-    $CurrentSettings = "$ClaudeDir\settings.json"
-    $SonnetSettings = "$CcsDir\sonnet.settings.json"
+    $TargetDir = "$CcsDir\.claude"
 
-    if ($Provider -eq "claude" -and (Test-Path $CurrentSettings)) {
-        Write-Host "[OK] Copying current Claude config to profile..."
-        Copy-Item $CurrentSettings $SonnetSettings
-        Write-Host "  Created: $SonnetSettings"
-    } else {
-        Write-Host "Creating Claude Sonnet profile template at $SonnetSettings"
+    # Check if already exists
+    if (Test-Path $TargetDir) {
+        Write-Host "|  [i]  .claude/ folder already exists, skipping"
+        return $true
+    }
 
-        if (Test-Path $CurrentSettings) {
+    # Create directory structure
+    $null = New-Item -ItemType Directory -Force -Path "$TargetDir\commands"
+    $null = New-Item -ItemType Directory -Force -Path "$TargetDir\skills\ccs-delegation\references"
+
+    if ($InstallMethod -eq "git" -and $SourceDir) {
+        # Copy from local git repo
+        $SourceClaudeDir = Join-Path $SourceDir ".claude"
+        if (Test-Path $SourceClaudeDir) {
             try {
-                $Config = Get-Content $CurrentSettings -Raw | ConvertFrom-Json
-                # Remove GLM-specific vars
-                if ($Config.env) {
-                    $Config.env.PSObject.Properties.Remove('ANTHROPIC_BASE_URL')
-                    $Config.env.PSObject.Properties.Remove('ANTHROPIC_AUTH_TOKEN')
-                    $Config.env.PSObject.Properties.Remove('ANTHROPIC_MODEL')
-                }
-                $Config | ConvertTo-Json -Depth 10 | Set-Content $SonnetSettings
+                Copy-Item -Path "$SourceClaudeDir\*" -Destination $TargetDir -Recurse -Force
+                Write-Host "|  [OK] Installed .claude/ folder"
+                return $true
             } catch {
-                New-SonnetTemplate | Set-Content $SonnetSettings
+                Write-Host "|  [!]  Failed to copy .claude/ folder"
+                return $false
             }
         } else {
-            New-SonnetTemplate | Set-Content $SonnetSettings
+            Write-Host "|  [!]  .claude/ folder not found in source"
+            return $false
         }
+    } else {
+        # Standalone: download from GitHub
+        try {
+            $BaseUrl = "https://raw.githubusercontent.com/kaitranntt/ccs/main/.claude"
 
-        Write-Host "  Created: $SonnetSettings"
-        Write-Host "  [i]  This uses your Claude subscription (no API key needed)"
+            Invoke-WebRequest -Uri "$BaseUrl/commands/ccs.md" `
+                -OutFile "$TargetDir\commands\ccs.md" -UseBasicParsing
+            Invoke-WebRequest -Uri "$BaseUrl/skills/ccs-delegation/SKILL.md" `
+                -OutFile "$TargetDir\skills\ccs-delegation\SKILL.md" -UseBasicParsing
+            Invoke-WebRequest -Uri "$BaseUrl/skills/ccs-delegation/references/delegation-patterns.md" `
+                -OutFile "$TargetDir\skills\ccs-delegation\references\delegation-patterns.md" -UseBasicParsing
+
+            Write-Host "|  [OK] Downloaded .claude/ folder"
+            return $true
+        } catch {
+            Write-Host "|  [!]  Failed to download .claude/ folder"
+            return $false
+        }
     }
 }
 
 # Main Installation
 
-Write-Host "┌─ Installing CCS (Windows)"
+Write-Host '===== Installing CCS (Windows) ====='
 
 # Create directories
 New-Item -ItemType Directory -Force -Path $CcsDir | Out-Null
@@ -158,8 +193,28 @@ if ($InstallMethod -eq "standalone") {
     }
 } else {
     # Git install - copy local file
-    Copy-Item "$ScriptDir\ccs.ps1" "$CcsDir\ccs.ps1" -Force
+    $CcsPs1Path = if (Test-Path "$ScriptDir\ccs.ps1") {
+        "$ScriptDir\ccs.ps1"
+    } elseif (Test-Path "$ScriptDir\..\ccs.ps1") {
+        "$ScriptDir\..\ccs.ps1"
+    } else {
+        throw "ccs.ps1 not found"
+    }
+    Copy-Item $CcsPs1Path "$CcsDir\ccs.ps1" -Force
     Write-Host "|  [OK] Installed ccs.ps1"
+
+    # Copy VERSION file if available (for proper version display)
+    $VersionPath = if (Test-Path "$ScriptDir\VERSION") {
+        "$ScriptDir\VERSION"
+    } elseif (Test-Path "$ScriptDir\..\VERSION") {
+        "$ScriptDir\..\VERSION"
+    } else {
+        $null
+    }
+    if ($VersionPath) {
+        Copy-Item $VersionPath "$CcsDir\VERSION" -Force
+        Write-Host "|  [OK] Installed VERSION file"
+    }
 }
 
 # Install uninstall script as ccs-uninstall.ps1
@@ -189,7 +244,16 @@ if ($ScriptDir -and (Test-Path "$ScriptDir\uninstall.ps1")) {
 }
 
 Write-Host "|  [OK] Created directories"
-Write-Host "└─"
+
+# Install .claude/ folder
+if ($InstallMethod -eq "git" -and $ScriptDir) {
+    $ParentDir = Split-Path -Parent $ScriptDir
+    $null = Install-ClaudeFolder -SourceDir $ParentDir
+} else {
+    $null = Install-ClaudeFolder -SourceDir ""
+}
+
+Write-Host "========================================="
 Write-Host ""
 
 # Profile Setup
@@ -197,50 +261,68 @@ Write-Host ""
 $CurrentProvider = Detect-CurrentProvider
 
 $ProviderLabel = switch ($CurrentProvider) {
-    "glm" { " (detected: GLM)" }
-    "claude" { " (detected: Claude)" }
-    "custom" { " (detected: custom)" }
+    "glm" { ' (detected: GLM)' }
+    "claude" { ' (detected: Claude)' }
+    "custom" { ' (detected: custom)' }
     default { "" }
 }
 
-Write-Host "┌─ Configuring Profiles$ProviderLabel"
+Write-Host "===== Configuring Profiles v$CcsVersion$ProviderLabel"
 
-$NeedsGlmKey = $false
-
-# Create ccs config with file paths (same structure as Linux)
+# Backup existing config (single backup, no timestamp)
 $ConfigFile = "$CcsDir\config.json"
-if (-not (Test-Path $ConfigFile)) {
-    $ConfigContent = @{
-        profiles = @{
-            glm = "~/.ccs/glm.settings.json"
-            son = "~/.ccs/sonnet.settings.json"
-        }
-    }
-
-    $ConfigContent | ConvertTo-Json -Depth 10 | Set-Content $ConfigFile
-    Write-Host "|  [OK] Config -> $env:USERPROFILE\.ccs\config.json"
+$BackupFile = "$CcsDir\config.json.backup"
+if (Test-Path $ConfigFile) {
+    Copy-Item $ConfigFile $BackupFile -Force
 }
 
-# Create profile settings files
+$NeedsGlmKey = $false
 $GlmSettings = "$CcsDir\glm.settings.json"
-$SonnetSettings = "$CcsDir\sonnet.settings.json"
 
+# Create GLM profile if missing
 if (-not (Test-Path $GlmSettings)) {
     New-GlmProfile -Provider $CurrentProvider
     if ($CurrentProvider -ne "glm") {
         $NeedsGlmKey = $true
     }
 } else {
-    Write-Host "|  [OK] GLM profile exists: $GlmSettings"
+    Write-Host '|  [OK] GLM profile exists'
 }
 
-if (-not (Test-Path $SonnetSettings)) {
-    New-SonnetProfile -Provider $CurrentProvider
-} else {
-    Write-Host "|  [OK] Sonnet profile exists: $SonnetSettings"
+# Create config if missing
+if (-not (Test-Path $ConfigFile)) {
+    $ConfigContent = @{
+        profiles = @{
+            glm = "~/.ccs/glm.settings.json"
+            default = "~/.claude/settings.json"
+        }
+    }
+    $ConfigContent | ConvertTo-Json -Depth 10 | Set-Content $ConfigFile
+    Write-Host ('|  OK: Config created at {0}\.ccs\config.json' -f $env:USERPROFILE)
 }
 
-Write-Host "└─"
+# Validate config JSON
+if (Test-Path $ConfigFile) {
+    try {
+        $null = Get-Content $ConfigFile -Raw | ConvertFrom-Json
+    } catch {
+        Write-Host '|  [!]  Warning: Invalid JSON in config.json' -ForegroundColor Yellow
+        if (Test-Path $BackupFile) {
+            Write-Host ('|     Restore from: {0}' -f $BackupFile)
+        }
+    }
+}
+
+# Validate GLM settings JSON
+if (Test-Path $GlmSettings) {
+    try {
+        $null = Get-Content $GlmSettings -Raw | ConvertFrom-Json
+    } catch {
+        Write-Host '|  [!]  Warning: Invalid JSON in glm.settings.json' -ForegroundColor Yellow
+    }
+}
+
+Write-Host "========================================="
 Write-Host ""
 
 # Check and update PATH
@@ -274,25 +356,16 @@ if ($NeedsGlmKey) {
 
 Write-Host "[SUCCESS] CCS installed successfully!"
 Write-Host ""
-
-# Build quick start based on current provider
-if ($CurrentProvider -eq "claude") {
-    Write-Host "   Quick start:"
-    Write-Host "     ccs son       # Claude Sonnet (current)"
-    Write-Host "     ccs glm       # GLM (after adding API key)"
-    Write-Host "     ccs           # Default (no profile)"
-} elseif ($CurrentProvider -eq "glm") {
-    Write-Host "   Quick start:"
-    Write-Host "     ccs glm       # GLM (current)"
-    Write-Host "     ccs son       # Claude Sonnet"
-    Write-Host "     ccs           # Default (no profile)"
-} else {
-    Write-Host "   Quick start:"
-    Write-Host "     ccs           # Default (no profile)"
-    Write-Host "     ccs son       # Claude Sonnet"
-    Write-Host "     ccs glm       # GLM (after adding API key)"
-}
-
+Write-Host "   Installed components:"
+Write-Host "     * ccs command        -> $CcsDir\ccs.ps1"
+Write-Host "     * config             -> $CcsDir\config.json"
+Write-Host "     * glm profile        -> $CcsDir\glm.settings.json"
+Write-Host "     * .claude/ folder    -> $CcsDir\.claude\"
+Write-Host ""
+Write-Host "   Quick start:"
+Write-Host "     ccs           # Use Claude subscription - default"
+Write-Host "     ccs glm       # Use GLM fallback"
+Write-Host ""
 Write-Host ""
 Write-Host "   Usage: ccs [profile] [claude-args]"
 Write-Host "   Example: ccs glm /plan 'implement feature'"

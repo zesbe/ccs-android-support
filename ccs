@@ -1,23 +1,32 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Version
-CCS_VERSION="1.1.0"
+# Version - Read from VERSION file
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CCS_VERSION="$(cat "$SCRIPT_DIR/VERSION" 2>/dev/null || echo "unknown")"
 
 CONFIG_FILE="${CCS_CONFIG:-$HOME/.ccs/config.json}"
-PROFILE="${1:-default}"
 
-# Special case: version command
-if [[ "$PROFILE" == "version" || "$PROFILE" == "--version" || "$PROFILE" == "-v" ]]; then
+# Special case: version command (check BEFORE profile detection)
+if [[ $# -gt 0 ]] && [[ "${1}" == "version" || "${1}" == "--version" || "${1}" == "-v" ]]; then
   echo "CCS (Claude Code Switch) version $CCS_VERSION"
   echo "https://github.com/kaitranntt/ccs"
   exit 0
 fi
 
-# Special case: help command (forward to Claude CLI)
-if [[ "$PROFILE" == "--help" || "$PROFILE" == "-h" || "$PROFILE" == "help" ]]; then
+# Special case: help command (check BEFORE profile detection)
+if [[ $# -gt 0 ]] && [[ "${1}" == "--help" || "${1}" == "-h" || "${1}" == "help" ]]; then
   shift  # Remove the help argument
   exec claude --help "$@"
+fi
+
+# Smart profile detection: if first arg starts with '-', it's a flag not a profile
+if [[ $# -eq 0 ]] || [[ "${1}" =~ ^- ]]; then
+  # No args or first arg is a flag → use default profile
+  PROFILE="default"
+else
+  # First arg doesn't start with '-' → treat as profile name
+  PROFILE="${1}"
 fi
 
 # Check config exists
@@ -25,7 +34,9 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
   echo "Error: Config file not found: $CONFIG_FILE"
   echo ""
   echo "Create ~/.ccs/config.json with your profile mappings."
-  echo "See .ccs.example.json for template."
+  echo "See config/config.example.json for template."
+  echo ""
+  echo "Or reinstall: curl -fsSL ccs.kaitran.ca/install | bash"
   exit 1
 fi
 
@@ -55,7 +66,9 @@ fi
 # Validate config has profiles object
 if ! jq -e '.profiles' "$CONFIG_FILE" &>/dev/null; then
   echo "Error: Config must have 'profiles' object"
-  echo "See .ccs.example.json for correct format"
+  echo ""
+  echo "See config/config.example.json for correct format"
+  echo "Or reinstall: curl -fsSL ccs.kaitran.ca/install | bash"
   exit 1
 fi
 
@@ -81,8 +94,8 @@ if [[ ! -f "$SETTINGS_PATH" ]]; then
   exit 1
 fi
 
-# Shift profile arg if it was provided, pass rest to claude
-if [[ $# -gt 0 ]]; then
+# Shift profile arg only if first arg was NOT a flag
+if [[ $# -gt 0 ]] && [[ ! "${1}" =~ ^- ]]; then
   shift
 fi
 

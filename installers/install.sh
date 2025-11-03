@@ -19,12 +19,25 @@ else
 fi
 
 # Detect installation method (git vs standalone)
-# Check if ccs executable exists in SCRIPT_DIR (real git install)
+# Check if ccs executable exists in SCRIPT_DIR or parent (real git install)
 # Don't just check .git (user might run curl | bash inside their own git repo)
-if [[ -f "$SCRIPT_DIR/ccs" ]]; then
+if [[ -f "$SCRIPT_DIR/ccs" ]] || [[ -f "$SCRIPT_DIR/../ccs" ]]; then
   INSTALL_METHOD="git"
 else
   INSTALL_METHOD="standalone"
+fi
+
+# Version configuration
+# IMPORTANT: Update this version when releasing new versions!
+# This hardcoded version is used for standalone installations (curl | bash)
+# For git installations, VERSION file is read if available
+CCS_VERSION="2.1.1"
+
+# Try to read VERSION file for git installations
+if [[ -f "$SCRIPT_DIR/VERSION" ]]; then
+  CCS_VERSION="$(cat "$SCRIPT_DIR/VERSION" | tr -d '\n' | tr -d '\r')"
+elif [[ -f "$SCRIPT_DIR/../VERSION" ]]; then
+  CCS_VERSION="$(cat "$SCRIPT_DIR/../VERSION" | tr -d '\n' | tr -d '\r')"
 fi
 
 # --- Platform Detection ---
@@ -91,14 +104,6 @@ create_glm_template() {
 EOF
 }
 
-create_sonnet_template() {
-  cat << 'EOF'
-{
-  "env": {}
-}
-EOF
-}
-
 atomic_mv() {
   local src="$1"
   local dest="$2"
@@ -106,9 +111,58 @@ atomic_mv() {
     return 0
   else
     rm -f "$src"
-    echo "  ❌ Error: Failed to create $dest (check permissions)"
+    echo "  ✗ Error: Failed to create $dest (check permissions)"
     exit 1
   fi
+}
+
+download_file() {
+  local url="$1"
+  local dest="$2"
+
+  if ! curl -fsSL "$url" -o "$dest"; then
+    echo "  ⚠ Failed to download: $(basename "$dest")"
+    return 1
+  fi
+  return 0
+}
+
+install_claude_folder() {
+  local source_dir="$1"
+  local target_dir="$CCS_DIR/.claude"
+
+  # Check if already exists
+  if [[ -d "$target_dir" ]]; then
+    echo "│  ℹ .claude/ folder already exists, skipping"
+    return 0
+  fi
+
+  mkdir -p "$target_dir/commands" "$target_dir/skills/ccs-delegation/references"
+
+  if [[ "$INSTALL_METHOD" == "git" ]]; then
+    # Copy from local git repo
+    if [[ -d "$source_dir/.claude" ]]; then
+      cp -r "$source_dir/.claude"/* "$target_dir/" 2>/dev/null || {
+        echo "│  ⚠ Failed to copy .claude/ folder"
+        return 1
+      }
+      echo "│  ✓ Installed .claude/ folder"
+    else
+      echo "│  ⚠ .claude/ folder not found in source"
+      return 1
+    fi
+  else
+    # Standalone: download from GitHub
+    local base_url="https://raw.githubusercontent.com/kaitranntt/ccs/main/.claude"
+
+    download_file "$base_url/commands/ccs.md" "$target_dir/commands/ccs.md" || return 1
+    download_file "$base_url/skills/ccs-delegation/SKILL.md" "$target_dir/skills/ccs-delegation/SKILL.md" || return 1
+    download_file "$base_url/skills/ccs-delegation/references/delegation-patterns.md" "$target_dir/skills/ccs-delegation/references/delegation-patterns.md" || return 1
+
+    echo "│  ✓ Downloaded .claude/ folder"
+  fi
+
+  return 0
 }
 
 create_glm_profile() {
@@ -149,50 +203,14 @@ create_glm_profile() {
         atomic_mv "$glm_settings.tmp" "$glm_settings"
       else
         rm -f "$glm_settings.tmp"
-        echo "  ℹ️  jq failed, using basic template"
+        echo "  ℹ  jq failed, using basic template"
         create_glm_template > "$glm_settings"
       fi
     else
       create_glm_template > "$glm_settings"
     fi
     echo "  Created: $glm_settings"
-    echo "  ⚠️  Edit this file and replace YOUR_GLM_API_KEY_HERE with your actual GLM API key"
-  fi
-}
-
-create_sonnet_profile() {
-  local current_settings="$CLAUDE_DIR/settings.json"
-  local sonnet_settings="$CCS_DIR/sonnet.settings.json"
-  local provider="$1"
-
-  if [[ "$provider" == "claude" ]]; then
-    echo "✓ Copying current Claude config to profile..."
-    cp "$current_settings" "$sonnet_settings"
-    echo "  Created: $sonnet_settings"
-  else
-    echo "Creating Claude Sonnet profile template at $sonnet_settings"
-    if [[ -f "$current_settings" ]] && command -v jq &> /dev/null; then
-      # Remove GLM-specific vars, but keep ANTHROPIC_DEFAULT_* if they contain "claude" (user preference)
-      # Filter logic assumes Claude model IDs contain "claude" substring (case-insensitive)
-      if jq 'del(.env.ANTHROPIC_BASE_URL, .env.ANTHROPIC_AUTH_TOKEN, .env.ANTHROPIC_MODEL) |
-          .env |= with_entries(
-            select(
-              (.key | IN("ANTHROPIC_DEFAULT_OPUS_MODEL", "ANTHROPIC_DEFAULT_SONNET_MODEL", "ANTHROPIC_DEFAULT_HAIKU_MODEL") | not) or
-              (.value | tostring? // "" | ascii_downcase | contains("claude"))
-            )
-          ) |
-          if (.env | length) == 0 then .env = {} else . end' "$current_settings" > "$sonnet_settings.tmp" 2>/dev/null; then
-        atomic_mv "$sonnet_settings.tmp" "$sonnet_settings"
-      else
-        rm -f "$sonnet_settings.tmp"
-        echo "  ℹ️  jq failed, using basic template"
-        create_sonnet_template > "$sonnet_settings"
-      fi
-    else
-      create_sonnet_template > "$sonnet_settings"
-    fi
-    echo "  Created: $sonnet_settings"
-    echo "  ℹ️  This uses your Claude subscription (no API key needed)"
+    echo "  ⚠  Edit this file and replace YOUR_GLM_API_KEY_HERE with your actual GLM API key"
   fi
 }
 
@@ -207,7 +225,7 @@ mkdir -p "$INSTALL_DIR" "$CCS_DIR"
 if [[ "$INSTALL_METHOD" == "standalone" ]]; then
   # Standalone install - download ccs from GitHub
   if ! command -v curl &> /dev/null; then
-    echo "❌ Error: curl is required for standalone installation"
+    echo "✗ Error: curl is required for standalone installation"
     exit 1
   fi
 
@@ -222,9 +240,28 @@ if [[ "$INSTALL_METHOD" == "standalone" ]]; then
   fi
 else
   # Git install - use local ccs file
-  chmod +x "$SCRIPT_DIR/ccs"
-  ln -sf "$SCRIPT_DIR/ccs" "$INSTALL_DIR/ccs"
+  # Handle both running from root or from installers/ subdirectory
+  if [[ -f "$SCRIPT_DIR/ccs" ]]; then
+    chmod +x "$SCRIPT_DIR/ccs"
+    ln -sf "$SCRIPT_DIR/ccs" "$INSTALL_DIR/ccs"
+  elif [[ -f "$SCRIPT_DIR/../ccs" ]]; then
+    chmod +x "$SCRIPT_DIR/../ccs"
+    ln -sf "$SCRIPT_DIR/../ccs" "$INSTALL_DIR/ccs"
+  else
+    echo "│"
+    echo "✗ Error: ccs executable not found"
+    exit 1
+  fi
   echo "│  ✓ Installed executable"
+
+  # Copy VERSION file if available (for proper version display)
+  if [[ -f "$SCRIPT_DIR/VERSION" ]]; then
+    cp "$SCRIPT_DIR/VERSION" "$CCS_DIR/VERSION"
+    echo "│  ✓ Installed VERSION file"
+  elif [[ -f "$SCRIPT_DIR/../VERSION" ]]; then
+    cp "$SCRIPT_DIR/../VERSION" "$CCS_DIR/VERSION"
+    echo "│  ✓ Installed VERSION file"
+  fi
 fi
 
 if [[ ! -L "$INSTALL_DIR/ccs" ]]; then
@@ -252,6 +289,14 @@ elif [[ "$INSTALL_METHOD" == "standalone" ]] && command -v curl &> /dev/null; th
 fi
 
 echo "│  ✓ Created directories"
+
+# Install .claude/ folder
+if [[ "$INSTALL_METHOD" == "git" ]]; then
+  install_claude_folder "$SCRIPT_DIR/.." || echo "│  ⚠ Optional .claude/ installation skipped"
+else
+  install_claude_folder "" || echo "│  ⚠ Optional .claude/ installation skipped"
+fi
+
 echo "└─"
 echo ""
 
@@ -259,7 +304,6 @@ echo ""
 
 CURRENT_PROVIDER=$(detect_current_provider)
 GLM_SETTINGS="$CCS_DIR/glm.settings.json"
-SONNET_SETTINGS="$CCS_DIR/sonnet.settings.json"
 
 # Build provider label
 PROVIDER_LABEL=""
@@ -267,36 +311,57 @@ PROVIDER_LABEL=""
 [[ "$CURRENT_PROVIDER" == "claude" ]] && PROVIDER_LABEL=" (detected: Claude)"
 [[ "$CURRENT_PROVIDER" == "custom" ]] && PROVIDER_LABEL=" (detected: custom)"
 
-echo "┌─ Configuring Profiles${PROVIDER_LABEL}"
+echo "┌─ Configuring Profiles (v${CCS_VERSION})${PROVIDER_LABEL}"
+
+# Backup existing config if present (single backup, no timestamp)
+BACKUP_FILE="$CCS_DIR/config.json.backup"
+if [[ -f "$CCS_DIR/config.json" ]]; then
+  cp "$CCS_DIR/config.json" "$BACKUP_FILE"
+fi
 
 # Track if GLM needs API key
 NEEDS_GLM_KEY=false
 
-# Create missing profiles (silently, show only result)
+# Create GLM profile if missing
 if [[ ! -f "$GLM_SETTINGS" ]]; then
   create_glm_profile "$CURRENT_PROVIDER" >/dev/null 2>&1
   echo "│  ✓ GLM profile → ~/.ccs/glm.settings.json"
   [[ "$CURRENT_PROVIDER" != "glm" ]] && NEEDS_GLM_KEY=true
 fi
 
-if [[ ! -f "$SONNET_SETTINGS" ]]; then
-  create_sonnet_profile "$CURRENT_PROVIDER" >/dev/null 2>&1
-  echo "│  ✓ Sonnet profile → ~/.ccs/sonnet.settings.json"
-fi
-
-# Create ccs config
+# Create config if missing
 if [[ ! -f "$CCS_DIR/config.json" ]]; then
   cat > "$CCS_DIR/config.json.tmp" << 'EOF'
 {
   "profiles": {
     "glm": "~/.ccs/glm.settings.json",
-    "son": "~/.ccs/sonnet.settings.json",
     "default": "~/.claude/settings.json"
   }
 }
 EOF
   atomic_mv "$CCS_DIR/config.json.tmp" "$CCS_DIR/config.json"
   echo "│  ✓ Config → ~/.ccs/config.json"
+fi
+
+# Validate config JSON
+if [[ -f "$CCS_DIR/config.json" ]]; then
+  if command -v jq &> /dev/null; then
+    if ! jq -e . "$CCS_DIR/config.json" &>/dev/null; then
+      echo "│  ⚠  Warning: Invalid JSON in config.json"
+      if [[ -f "$BACKUP_FILE" ]]; then
+        echo "│     Restore from: $BACKUP_FILE"
+      fi
+    fi
+  fi
+fi
+
+# Validate GLM settings JSON
+if [[ -f "$GLM_SETTINGS" ]]; then
+  if command -v jq &> /dev/null; then
+    if ! jq -e . "$GLM_SETTINGS" &>/dev/null; then
+      echo "│  ⚠  Warning: Invalid JSON in glm.settings.json"
+    fi
+  fi
 fi
 
 echo "└─"
@@ -320,27 +385,18 @@ if [[ "$NEEDS_GLM_KEY" == "true" ]]; then
   echo ""
 fi
 
-echo "✅ CCS installed successfully!"
+echo "✓ CCS installed successfully!"
 echo ""
-
-# Build quick start based on current provider
-if [[ "$CURRENT_PROVIDER" == "claude" ]]; then
-  echo "   Quick start:"
-  echo "     ccs son       # Claude Sonnet (current)"
-  echo "     ccs glm       # GLM (after adding API key)"
-  echo "     ccs           # Default profile"
-elif [[ "$CURRENT_PROVIDER" == "glm" ]]; then
-  echo "   Quick start:"
-  echo "     ccs glm       # GLM (current)"
-  echo "     ccs son       # Claude Sonnet"
-  echo "     ccs           # Default profile"
-else
-  echo "   Quick start:"
-  echo "     ccs           # Default profile"
-  echo "     ccs son       # Claude Sonnet"
-  echo "     ccs glm       # GLM (after adding API key)"
-fi
-
+echo "   Installed components:"
+echo "     • ccs command        → ~/.local/bin/ccs"
+echo "     • config             → ~/.ccs/config.json"
+echo "     • glm profile        → ~/.ccs/glm.settings.json"
+echo "     • .claude/ folder    → ~/.ccs/.claude/"
+echo ""
+echo "   Quick start:"
+echo "     ccs           # Use Claude subscription (default)"
+echo "     ccs glm       # Use GLM fallback"
+echo ""
 echo ""
 echo "   To uninstall: ccs-uninstall"
 echo ""
