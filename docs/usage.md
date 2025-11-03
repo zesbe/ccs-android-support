@@ -75,10 +75,22 @@ ccs glm /code "implement feature"
 ### Utility Commands
 
 ```bash
-ccs --version    # Show CCS version
+ccs --version    # Show CCS version and install location
 ccs --help       # Show Claude CLI help
 ccs --install    # Install CCS commands and skills to ~/.claude/
 ```
+
+**Example `--version` Output**:
+```
+CCS (Claude Code Switch) version 2.1.3
+Installed at: /usr/local/bin/ccs -> ~/.ccs/ccs
+https://github.com/kaitranntt/ccs
+```
+
+**Platform-Specific Locations**:
+- macOS: `/usr/local/bin/ccs`
+- Linux: `~/.local/bin/ccs`
+- Windows: `%USERPROFILE%\.ccs\ccs.ps1`
 
 ### Installing Commands and Skills
 
@@ -101,19 +113,24 @@ This will:
 │  Target: /home/user/.claude
 │
 │  Installing commands...
-│  │  ✓  Installed command: ccs.md
+│  │  [OK]  Installed command: ccs.md
 │
 │  Installing skills...
-│  │  ✓  Installed skill: ccs-delegation
+│  │  [OK]  Installed skill: ccs-delegation
 └─
 
-✓ Installation complete!
+[OK] Installation complete!
   Installed: 2 items
   Skipped: 0 items (already exist)
 
 You can now use the /ccs command in Claude CLI for task delegation.
 Example: /ccs glm /plan 'add user authentication'
 ```
+
+**Notes**:
+- Output uses ASCII symbols ([OK], [i], [X]) instead of emojis
+- Colored output on TTY terminals (disable with `NO_COLOR=1`)
+- Existing files skipped automatically (safe to re-run)
 
 ## Task Delegation
 

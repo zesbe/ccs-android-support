@@ -20,11 +20,16 @@ The tool does ONE thing: map profile names to Claude settings files. Never add f
 
 ## Key Constraints
 
-1. **NO EMOJIS in terminal output** - Users of this `ccs` project may lack encoders by default. Try to find alternatives to illustrate signals
-2. **Idempotent installations** - Running install scripts multiple times must be safe
-3. **Non-invasive** - Never modify `~/.claude/settings.json`
-4. **Cross-platform parity** - Identical behavior on Unix/Linux/macOS/Windows
-5. **Edge case handling** - Handle all scenarios gracefully (see tests/edge-cases.sh)
+1. **NO EMOJIS in terminal output** - Use ASCII symbols ([OK], [!], [X], [i]) for compatibility
+2. **TTY-aware color output** - Colors only when output to terminal, respects NO_COLOR env var
+3. **Unified install location** (v2.2.0+):
+   - All Unix: `~/.local/bin` (auto PATH config, no sudo)
+   - Windows: `%USERPROFILE%\.ccs`
+4. **Auto PATH configuration** - Detects shell (bash/zsh/fish), adds to profile automatically
+5. **Idempotent installations** - Running install scripts multiple times must be safe
+6. **Non-invasive** - Never modify `~/.claude/settings.json`
+7. **Cross-platform parity** - Identical behavior on Unix/Linux/macOS/Windows
+8. **Edge case handling** - Handle all scenarios gracefully (see tests/edge-cases.sh)
 
 ## Architecture
 
@@ -48,6 +53,12 @@ exec claude --settings <path> [args]
 - `.claude/`: Commands and skills for Claude Code integration
 
 **Installation Creates**:
+
+**Executable Locations**:
+- macOS / Linux: `~/.local/bin/ccs` (symlink to `~/.ccs/ccs`)
+- Windows: `%USERPROFILE%\.ccs\ccs.ps1`
+
+**Configuration Directory**:
 ```
 ~/.ccs/
 ├── ccs                     # Main executable (or ccs.ps1 on Windows)
@@ -105,6 +116,13 @@ rm -rf ~/.ccs
 - Use `#!/usr/bin/env bash` shebang
 - Set `set -euo pipefail` for safety
 - Dependencies: Only `jq` for JSON parsing
+
+### Terminal Output
+- **TTY Detection**: Check `[[ -t 2 ]]` before using colors (stderr)
+- **NO_COLOR Support**: Respect `${NO_COLOR:-}` environment variable
+- **ASCII Symbols Only**: [OK], [!], [X], [i] - no emojis
+- **Error Formatting**: Use box borders (╔═╗║╚╝) for critical messages
+- **Color Codes**: RED, YELLOW, GREEN, CYAN, BOLD, RESET - disable when not TTY
 
 ### PowerShell (Windows)
 - Compatibility: PowerShell 5.1+
@@ -188,8 +206,14 @@ Before any PR, verify:
 - [ ] Works on Windows (Git Bash)
 - [ ] Handles all edge cases in test suite
 - [ ] Installation is idempotent
-- [ ] No emojis in terminal output
-- [ ] Version displayed correctly
+- [ ] No emojis in terminal output (ASCII symbols only)
+- [ ] Version displayed correctly with install location
+- [ ] Colors work on TTY, disabled when piped
+- [ ] NO_COLOR environment variable respected
+- [ ] Auto PATH config works for bash, zsh, fish
+- [ ] Shell reload instructions shown correctly
+- [ ] PATH not duplicated on multiple installs
+- [ ] Manual PATH setup instructions clear if auto fails
 
 ## Integration with Claude Code
 

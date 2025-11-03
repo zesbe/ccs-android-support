@@ -12,6 +12,18 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# --- Color/Format Functions ---
+function Write-ErrorMsg {
+    param([string]$Message)
+    Write-Host ""
+    Write-Host "╔═════════════════════════════════════════════╗" -ForegroundColor Red
+    Write-Host "║  ERROR                                      ║" -ForegroundColor Red
+    Write-Host "╚═════════════════════════════════════════════╝" -ForegroundColor Red
+    Write-Host ""
+    Write-Host $Message -ForegroundColor Red
+    Write-Host ""
+}
+
 # Version - Read from VERSION file
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $VersionFile = Join-Path $ScriptDir "VERSION"
@@ -122,6 +134,13 @@ function Install-CommandsAndSkills {
 $FirstArg = if ($ProfileOrFlag -ne "default") { $ProfileOrFlag } elseif ($RemainingArgs.Count -gt 0) { $RemainingArgs[0] } else { $null }
 if ($FirstArg -eq "version" -or $FirstArg -eq "--version" -or $FirstArg -eq "-v") {
     Write-Host "CCS (Claude Code Switch) version $CCS_VERSION"
+
+    # Show install location
+    $InstallLocation = (Get-Command ccs -ErrorAction SilentlyContinue).Source
+    if ($InstallLocation) {
+        Write-Host "Installed at: $InstallLocation"
+    }
+
     Write-Host "https://github.com/kaitranntt/ccs"
     exit 0
 }
@@ -189,16 +208,28 @@ $ConfigFile = if ($env:CCS_CONFIG) {
 
 # Check config exists
 if (-not (Test-Path $ConfigFile)) {
-    Write-Host "Error: Config file not found: $ConfigFile" -ForegroundColor Red
-    Write-Host ""
-    Write-Host "Create $env:USERPROFILE\.ccs\config.json with your profile mappings."
-    Write-Host "See .ccs.example.json for template."
+    Write-ErrorMsg "Config file not found: $ConfigFile
+
+Solutions:
+  1. Reinstall CCS:
+     irm ccs.kaitran.ca/install | iex
+
+  2. Or create config manually:
+     New-Item -ItemType Directory -Force -Path '$env:USERPROFILE\.ccs'
+     Set-Content -Path '$env:USERPROFILE\.ccs\config.json' -Value '{
+       ""profiles"": {
+         ""glm"": ""~/.ccs/glm.settings.json"",
+         ""default"": ""~/.claude/settings.json""
+       }
+     }'"
     exit 1
 }
 
 # Validate profile name (alphanumeric, dash, underscore only)
 if ($Profile -notmatch '^[a-zA-Z0-9_-]+$') {
-    Write-Host "Error: Invalid profile name. Use only alphanumeric characters, dash, or underscore." -ForegroundColor Red
+    Write-ErrorMsg "Invalid profile name: $Profile
+
+Use only alphanumeric characters, dash, or underscore."
     exit 1
 }
 
@@ -207,14 +238,20 @@ try {
     $ConfigContent = Get-Content $ConfigFile -Raw -ErrorAction Stop
     $Config = $ConfigContent | ConvertFrom-Json -ErrorAction Stop
 } catch {
-    Write-Host "Error: Invalid JSON in $ConfigFile" -ForegroundColor Red
+    Write-ErrorMsg "Invalid JSON in $ConfigFile
+
+Fix the JSON syntax or reinstall:
+  irm ccs.kaitran.ca/install | iex"
     exit 1
 }
 
 # Validate config has profiles object
 if (-not $Config.profiles) {
-    Write-Host "Error: Config must have 'profiles' object" -ForegroundColor Red
-    Write-Host "See .ccs.example.json for correct format"
+    Write-ErrorMsg "Config must have 'profiles' object
+
+See .ccs.example.json for correct format
+Or reinstall:
+  irm ccs.kaitran.ca/install | iex"
     exit 1
 }
 
@@ -222,12 +259,11 @@ if (-not $Config.profiles) {
 $SettingsPath = $Config.profiles.$Profile
 
 if (-not $SettingsPath) {
-    Write-Host "Error: Profile '$Profile' not found in $ConfigFile" -ForegroundColor Red
-    Write-Host ""
-    Write-Host "Available profiles:"
-    $Config.profiles.PSObject.Properties.Name | ForEach-Object {
-        Write-Host "  - $_"
-    }
+    $AvailableProfiles = ($Config.profiles.PSObject.Properties.Name | ForEach-Object { "  - $_" }) -join "`n"
+    Write-ErrorMsg "Profile '$Profile' not found in $ConfigFile
+
+Available profiles:
+$AvailableProfiles"
     exit 1
 }
 
@@ -245,16 +281,12 @@ $SettingsPath = $SettingsPath -replace '/', '\'
 
 # Validate settings file exists
 if (-not (Test-Path $SettingsPath)) {
-    Write-Host "Error: Settings file not found: $SettingsPath" -ForegroundColor Red
-    Write-Host ""
-    Write-Host "Solutions:" -ForegroundColor Yellow
-    Write-Host "  1. Create the settings file:"
-    Write-Host "     New-Item -ItemType File -Force -Path '$SettingsPath'"
-    Write-Host "     Set-Content -Path '$SettingsPath' -Value '{`"env`":{}}`'"
-    Write-Host ""
-    Write-Host "  2. Or update profile path in $ConfigFile"
-    Write-Host ""
-    Write-Host "  3. Or reinstall: irm ccs.kaitran.ca/install.ps1 | iex"
+    Write-ErrorMsg "Settings file not found: $SettingsPath
+
+Solutions:
+  1. Create the settings file for profile '$Profile'
+  2. Update the path in $ConfigFile
+  3. Or reinstall: irm ccs.kaitran.ca/install | iex"
     exit 1
 }
 
@@ -263,16 +295,15 @@ try {
     $SettingsContent = Get-Content $SettingsPath -Raw -ErrorAction Stop
     $Settings = $SettingsContent | ConvertFrom-Json -ErrorAction Stop
 } catch {
-    Write-Host "Error: Invalid JSON in $SettingsPath" -ForegroundColor Red
-    Write-Host ""
-    Write-Host "Details: $_" -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host "Solutions:" -ForegroundColor Yellow
-    Write-Host "  1. Validate JSON at https://jsonlint.com"
-    Write-Host "  2. Or reset to template:"
-    Write-Host "     Set-Content -Path '$SettingsPath' -Value '{`"env`":{}}`'"
-    Write-Host ""
-    Write-Host "  3. Or reinstall: irm ccs.kaitran.ca/install.ps1 | iex"
+    Write-ErrorMsg "Invalid JSON in $SettingsPath
+
+Details: $_
+
+Solutions:
+  1. Validate JSON at https://jsonlint.com
+  2. Or reset to template:
+     Set-Content -Path '$SettingsPath' -Value '{`"env`":{}}`'
+  3. Or reinstall: irm ccs.kaitran.ca/install | iex"
     exit 1
 }
 

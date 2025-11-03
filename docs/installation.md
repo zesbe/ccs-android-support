@@ -12,6 +12,9 @@ curl -fsSL ccs.kaitran.ca/install | bash
 curl -fsSL https://raw.githubusercontent.com/kaitranntt/ccs/main/installers/install.sh | bash
 ```
 
+**Install Location**:
+- **All Unix Systems**: `~/.local/bin/ccs` (auto-configures PATH for bash, zsh, fish)
+
 ### Windows PowerShell
 
 ```powershell
@@ -22,9 +25,16 @@ irm ccs.kaitran.ca/install.ps1 | iex
 irm https://raw.githubusercontent.com/kaitranntt/ccs/main/installers/install.ps1 | iex
 ```
 
-**Note**:
+**Auto PATH Configuration**:
+- Installer detects your shell (bash, zsh, fish) automatically
+- Adds `~/.local/bin` to PATH in shell profile if needed
+- Idempotent: safe to run multiple times
+- Shows reload instructions after install
+
+**Notes**:
 - Unix installer supports both direct execution (`./install.sh`) and piped installation (`curl | bash`)
 - Windows installer requires PowerShell 5.1+ (pre-installed on Windows 10+)
+- No sudo required on any platform
 
 ## Git Clone Installation
 
@@ -51,12 +61,24 @@ cd ccs
 ### macOS / Linux
 
 ```bash
+# Create directory
+mkdir -p ~/.local/bin
+
 # Download script
 curl -fsSL https://raw.githubusercontent.com/kaitranntt/ccs/main/ccs -o ~/.local/bin/ccs
 chmod +x ~/.local/bin/ccs
 
-# Ensure ~/.local/bin in PATH
-export PATH="$HOME/.local/bin:$PATH"
+# Add to PATH (choose your shell)
+# For bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+
+# For zsh
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+
+# For fish
+echo 'set -gx PATH $HOME/.local/bin $PATH' >> ~/.config/fish/config.fish
 ```
 
 ### Windows PowerShell
@@ -75,11 +97,19 @@ $Path = [Environment]::GetEnvironmentVariable("Path", "User")
 
 ## What Gets Installed
 
+**Executable Location**:
+- macOS / Linux: `~/.local/bin/ccs` (symlink to `~/.ccs/ccs`)
+- Windows: `%USERPROFILE%\.ccs\ccs.ps1`
+
+**Configuration Directory** (`~/.ccs/`):
 ```bash
 ~/.ccs/
-├── ccs                     # Main executable
+├── ccs                     # Main executable (symlink target)
 ├── config.json             # Profile configuration
+├── config.json.backup      # Single backup (overwrites each install)
 ├── glm.settings.json       # GLM profile
+├── VERSION                 # Version file
+├── uninstall.sh            # Uninstaller
 └── .claude/                # Claude Code integration
     ├── commands/ccs.md     # /ccs meta-command
     └── skills/             # Delegation skills
@@ -109,18 +139,51 @@ git pull
 irm ccs.kaitran.ca/install.ps1 | iex
 ```
 
+## Auto PATH Configuration
+
+The installer automatically configures your shell PATH:
+
+**Supported Shells**:
+- bash (`.bashrc` or `.bash_profile`)
+- zsh (`.zshrc`)
+- fish (`.config/fish/config.fish`)
+
+**How It Works**:
+1. Detects your current shell from `$SHELL` environment variable
+2. Checks if `~/.local/bin` already in PATH
+3. If not, adds appropriate export to shell profile
+4. Shows reload instructions
+
+**Idempotent**:
+- Safe to run multiple times
+- Checks for existing CCS PATH entry before adding
+- Won't create duplicate entries
+
+**Manual PATH Setup** (if auto-config fails):
+
+Bash/Zsh:
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc  # or ~/.zshrc
+source ~/.bashrc  # or source ~/.zshrc
+```
+
+Fish:
+```fish
+echo 'set -gx PATH $HOME/.local/bin $PATH' >> ~/.config/fish/config.fish
+```
+
 ## Requirements
 
 ### macOS / Linux
 - `bash` 3.2+
-- `jq` (JSON processor)
+- `jq` (JSON processor, optional for enhanced features)
 - [Claude CLI](https://docs.claude.com/en/docs/claude-code/installation)
 
 ### Windows
 - PowerShell 5.1+ (pre-installed on Windows 10+)
 - [Claude CLI](https://docs.claude.com/en/docs/claude-code/installation)
 
-### Installing jq (macOS / Linux only)
+### Installing jq (macOS / Linux, optional)
 
 ```bash
 # macOS
@@ -136,4 +199,7 @@ sudo dnf install jq
 sudo pacman -S jq
 ```
 
-**Note**: Windows version uses PowerShell's built-in JSON support - no jq required.
+**Note**:
+- jq enhances GLM profile creation but is not required
+- Windows uses PowerShell's built-in JSON support - no jq needed
+- Installer creates basic templates without jq

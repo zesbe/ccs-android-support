@@ -30,7 +30,7 @@ $InstallMethod = if ($ScriptDir -and ((Test-Path "$ScriptDir\ccs.ps1") -or (Test
 # IMPORTANT: Update this version when releasing new versions!
 # This hardcoded version is used for standalone installations (irm | iex)
 # For git installations, VERSION file is read if available
-$CcsVersion = "2.1.3"
+$CcsVersion = "2.2.0"
 
 # Try to read VERSION file for git installations
 if ($ScriptDir) {
@@ -45,6 +45,43 @@ if ($ScriptDir) {
     if ($VersionFile -and (Test-Path $VersionFile)) {
         $CcsVersion = (Get-Content $VersionFile -Raw).Trim()
     }
+}
+
+# --- Color/Format Functions ---
+function Write-Critical {
+    param([string]$Message)
+    Write-Host ""
+    Write-Host "╔═════════════════════════════════════════════╗" -ForegroundColor Red
+    Write-Host "║  ACTION REQUIRED                            ║" -ForegroundColor Red
+    Write-Host "╚═════════════════════════════════════════════╝" -ForegroundColor Red
+    Write-Host ""
+    Write-Host $Message -ForegroundColor Red
+    Write-Host ""
+}
+
+function Write-WarningMsg {
+    param([string]$Message)
+    Write-Host ""
+    Write-Host "[!] WARNING" -ForegroundColor Yellow
+    Write-Host $Message -ForegroundColor Yellow
+    Write-Host ""
+}
+
+function Write-Success {
+    param([string]$Message)
+    Write-Host "[OK] $Message" -ForegroundColor Green
+}
+
+function Write-Info {
+    param([string]$Message)
+    Write-Host "[i] $Message"
+}
+
+function Write-Section {
+    param([string]$Title)
+    Write-Host ""
+    Write-Host "===== $Title =====" -ForegroundColor Cyan
+    Write-Host ""
 }
 
 # Helper Functions
@@ -347,14 +384,19 @@ if ($UserPath -notlike "*$CcsDir*") {
 
 # Show API key warning if needed
 if ($NeedsGlmKey) {
-    Write-Host "[!]  ACTION REQUIRED"
-    Write-Host ""
-    Write-Host "   Edit $env:USERPROFILE\.ccs\glm.settings.json and add your GLM API key"
-    Write-Host "   Replace YOUR_GLM_API_KEY_HERE with your actual API key"
-    Write-Host ""
+    Write-Critical "Configure GLM API Key:
+
+    1. Get API key from: https://api.z.ai
+
+    2. Edit: $env:USERPROFILE\.ccs\glm.settings.json
+
+    3. Replace: YOUR_GLM_API_KEY_HERE
+       With your actual API key
+
+    4. Test: ccs glm --version"
 }
 
-Write-Host "[SUCCESS] CCS installed successfully!"
+Write-Success "CCS installed successfully!"
 Write-Host ""
 Write-Host "   Installed components:"
 Write-Host "     * ccs command        -> $CcsDir\ccs.ps1"
@@ -363,12 +405,9 @@ Write-Host "     * glm profile        -> $CcsDir\glm.settings.json"
 Write-Host "     * .claude/ folder    -> $CcsDir\.claude\"
 Write-Host ""
 Write-Host "   Quick start:"
-Write-Host "     ccs           # Use Claude subscription - default"
+Write-Host "     ccs           # Use Claude subscription (default)"
 Write-Host "     ccs glm       # Use GLM fallback"
 Write-Host ""
-Write-Host ""
-Write-Host "   Usage: ccs [profile] [claude-args]"
-Write-Host "   Example: ccs glm /plan 'implement feature'"
 Write-Host ""
 Write-Host "   To uninstall: ccs-uninstall"
 Write-Host ""

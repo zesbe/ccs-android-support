@@ -92,19 +92,87 @@ Error: jq is required but not installed
 
 **Lưu ý**: Installer tạo các mẫu cơ bản ngay cả khi không có jq, nhưng các tính năng nâng cao cần jq.
 
-## Vấn Đề Môi Trường
+## Vấn Đề Cấu Hình PATH
 
-### PATH chưa được thiết lập
+### Cấu Hình PATH Tự Động
 
-```
-⚠️  Warning: ~/.local/bin is not in PATH
-```
+v2.2.0+ tự động cấu hình shell PATH. Nếu bạn thấy hướng dẫn reload sau khi cài, hãy làm theo:
 
-**Fix**: Thêm vào `~/.bashrc` hoặc `~/.zshrc`:
+**Cho bash**:
 ```bash
-export PATH="$HOME/.local/bin:$PATH"
+source ~/.bashrc
 ```
-Sau đó `source ~/.bashrc` hoặc khởi động lại shell.
+
+**Cho zsh**:
+```bash
+source ~/.zshrc
+```
+
+**Cho fish**:
+```fish
+source ~/.config/fish/config.fish
+```
+
+**Hoặc mở cửa sổ terminal mới** (PATH tự động load).
+
+### PATH Chưa Được Cấu Hình
+
+Nếu lệnh `ccs` không tìm thấy sau khi cài và reload:
+
+**Xác minh PATH entry tồn tại**:
+```bash
+# Cho bash/zsh
+grep "\.local/bin" ~/.bashrc ~/.zshrc
+
+# Cho fish
+grep "\.local/bin" ~/.config/fish/config.fish
+```
+
+**Sửa thủ công** (nếu auto-config thất bại):
+
+Bash:
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+Zsh:
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+Fish:
+```fish
+echo 'set -gx PATH $HOME/.local/bin $PATH' >> ~/.config/fish/config.fish
+source ~/.config/fish/config.fish
+```
+
+### Shell Profile Sai
+
+Nếu auto-config thêm vào file sai:
+
+**Tìm profile đang active**:
+```bash
+echo $SHELL  # Hiển thị shell hiện tại
+```
+
+**Tình huống phổ biến**:
+- macOS bash dùng `~/.bash_profile` (không phải `~/.bashrc`)
+- Shell tùy chỉnh cần config thủ công
+- Tmux/screen có thể dùng shell khác
+
+**Giải pháp**: Thêm PATH thủ công vào file profile đúng.
+
+### Shell Không Được Phát Hiện
+
+Nếu installer không thể phát hiện shell:
+
+**Triệu chứng**:
+- Không có cảnh báo PATH hiển thị
+- Lệnh `ccs` không tìm thấy sau khi cài
+
+**Giải pháp**: Thiết lập PATH thủ công (xem ở trên).
 
 ### Thiếu profile mặc định
 
@@ -178,3 +246,18 @@ ccs --verbose glm
 - Profile nào đang được chọn
 - File settings nào đang được sử dụng
 - Lệnh chính xác đang được thực thi
+
+## Tắt Output Có Màu
+
+Nếu output có màu gây vấn đề trong terminal hoặc logs của bạn:
+
+```bash
+export NO_COLOR=1
+ccs glm
+```
+
+**Trường Hợp Sử Dụng**:
+- Môi trường CI/CD
+- Tạo log file
+- Terminal không hỗ trợ màu
+- Tùy chọn trợ năng

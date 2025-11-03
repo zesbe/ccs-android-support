@@ -66,12 +66,31 @@ The installer auto-creates config and profile templates during installation:
 
 No magic. No file modification. Pure delegation. Works identically across all platforms.
 
-## Custom Config Location
+## Environment Variables
 
+### CCS_CONFIG
+
+Override default config location:
 ```bash
 export CCS_CONFIG=~/my-custom-config.json
 ccs glm
 ```
+
+### NO_COLOR
+
+Disable colored terminal output:
+```bash
+export NO_COLOR=1
+ccs glm
+```
+
+**Use Cases**:
+- CI/CD pipelines
+- Log files
+- Terminals without color support
+- Accessibility preferences
+
+When `NO_COLOR` is set, CCS uses plain ASCII output without ANSI color codes.
 
 ## Platform-Specific Notes
 

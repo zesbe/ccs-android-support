@@ -92,19 +92,87 @@ Error: jq is required but not installed
 
 **Note**: The installer creates basic templates even without jq, but enhanced features require jq.
 
-## Environment Issues
+## PATH Configuration Issues
 
-### PATH not set
+### Auto PATH Configuration
 
-```
-⚠️  Warning: ~/.local/bin is not in PATH
-```
+v2.2.0+ automatically configures shell PATH. If you see reload instructions after install, follow them:
 
-**Fix**: Add to `~/.bashrc` or `~/.zshrc`:
+**For bash**:
 ```bash
-export PATH="$HOME/.local/bin:$PATH"
+source ~/.bashrc
 ```
-Then `source ~/.bashrc` or restart shell.
+
+**For zsh**:
+```bash
+source ~/.zshrc
+```
+
+**For fish**:
+```fish
+source ~/.config/fish/config.fish
+```
+
+**Or open new terminal window** (PATH auto-loaded).
+
+### PATH Not Configured
+
+If `ccs` command not found after install and reload:
+
+**Verify PATH entry exists**:
+```bash
+# For bash/zsh
+grep "\.local/bin" ~/.bashrc ~/.zshrc
+
+# For fish
+grep "\.local/bin" ~/.config/fish/config.fish
+```
+
+**Manual fix** (if auto-config failed):
+
+Bash:
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+Zsh:
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+Fish:
+```fish
+echo 'set -gx PATH $HOME/.local/bin $PATH' >> ~/.config/fish/config.fish
+source ~/.config/fish/config.fish
+```
+
+### Wrong Shell Profile
+
+If auto-config added to wrong file:
+
+**Find active profile**:
+```bash
+echo $SHELL  # Shows current shell
+```
+
+**Common scenarios**:
+- macOS bash uses `~/.bash_profile` (not `~/.bashrc`)
+- Custom shells need manual config
+- Tmux/screen may use different shell
+
+**Solution**: Manually add PATH to correct profile file.
+
+### Shell Not Detected
+
+If installer couldn't detect shell:
+
+**Symptoms**:
+- No PATH warning shown
+- `ccs` command not found after install
+
+**Solution**: Manual PATH setup (see above).
 
 ### Default profile missing
 
@@ -125,13 +193,18 @@ Error: Profile 'default' not found in ~/.ccs/config.json
 
 ### Claude CLI not found
 
+**Error Message**:
 ```
-Error: claude command not found
+╔═════════════════════════════════════════════╗
+║  ERROR                                      ║
+╚═════════════════════════════════════════════╝
+
+claude command not found
 ```
 
 **Solution**: Install Claude CLI from [official documentation](https://docs.claude.com/en/docs/claude-code/installation).
 
-### Permission denied (Unix)
+### Permission denied
 
 ```
 Error: Permission denied: ~/.local/bin/ccs
@@ -144,14 +217,41 @@ chmod +x ~/.local/bin/ccs
 
 ### Config file not found
 
+**Error Message**:
 ```
-Error: Config file not found: ~/.ccs/config.json
+╔═════════════════════════════════════════════╗
+║  ERROR                                      ║
+╚═════════════════════════════════════════════╝
+
+Config file not found: ~/.ccs/config.json
+
+Solutions:
+  1. Reinstall CCS:
+     curl -fsSL ccs.kaitran.ca/install | bash
+
+  2. Or create config manually:
+     mkdir -p ~/.ccs
+     cat > ~/.ccs/config.json << 'EOF'
+{
+  "profiles": {
+    "glm": "~/.ccs/glm.settings.json",
+    "default": "~/.claude/settings.json"
+  }
+}
+EOF
 ```
 
 **Solution**: Re-run installer or create config manually:
 ```bash
 mkdir -p ~/.ccs
-echo '{"profiles":{"default":"~/.claude/settings.json"}}' > ~/.ccs/config.json
+cat > ~/.ccs/config.json << 'EOF'
+{
+  "profiles": {
+    "glm": "~/.ccs/glm.settings.json",
+    "default": "~/.claude/settings.json"
+  }
+}
+EOF
 ```
 
 ## Getting Help
@@ -178,3 +278,18 @@ This will show:
 - Which profile is being selected
 - Which settings file is being used
 - The exact command being executed
+
+## Disable Colored Output
+
+If color output causes issues in your terminal or logs:
+
+```bash
+export NO_COLOR=1
+ccs glm
+```
+
+**Use Cases**:
+- CI/CD environments
+- Log file generation
+- Terminals without color support
+- Accessibility preferences

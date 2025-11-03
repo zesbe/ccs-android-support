@@ -12,6 +12,9 @@ curl -fsSL ccs.kaitran.ca/install | bash
 curl -fsSL https://raw.githubusercontent.com/kaitranntt/ccs/main/installers/install.sh | bash
 ```
 
+**Vị Trí Cài Đặt**:
+- **Tất Cả Hệ Thống Unix**: `~/.local/bin/ccs` (tự động cấu hình PATH cho bash, zsh, fish)
+
 ### Windows PowerShell
 
 ```powershell
@@ -22,9 +25,16 @@ irm ccs.kaitran.ca/install.ps1 | iex
 irm https://raw.githubusercontent.com/kaitranntt/ccs/main/installers/install.ps1 | iex
 ```
 
+**Cấu Hình PATH Tự Động**:
+- Installer tự động phát hiện shell của bạn (bash, zsh, fish)
+- Thêm `~/.local/bin` vào PATH trong shell profile nếu cần
+- Idempotent: an toàn khi chạy nhiều lần
+- Hiển thị hướng dẫn reload sau khi cài đặt
+
 **Lưu ý**:
 - Installer Unix hỗ trợ cả chạy trực tiếp (`./install.sh`) và cài đặt qua pipe (`curl | bash`)
 - Installer Windows yêu cầu PowerShell 5.1+ (đã cài sẵn trên Windows 10+)
+- Không cần sudo trên bất kỳ nền tảng nào
 
 ## Cài Đặt qua Git Clone
 
@@ -51,12 +61,24 @@ cd ccs
 ### macOS / Linux
 
 ```bash
+# Tạo thư mục
+mkdir -p ~/.local/bin
+
 # Tải script
 curl -fsSL https://raw.githubusercontent.com/kaitranntt/ccs/main/ccs -o ~/.local/bin/ccs
 chmod +x ~/.local/bin/ccs
 
-# Đảm bảo ~/.local/bin trong PATH
-export PATH="$HOME/.local/bin:$PATH"
+# Thêm vào PATH (chọn shell của bạn)
+# Cho bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+
+# Cho zsh
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+
+# Cho fish
+echo 'set -gx PATH $HOME/.local/bin $PATH' >> ~/.config/fish/config.fish
 ```
 
 ### Windows PowerShell
@@ -75,11 +97,19 @@ $Path = [Environment]::GetEnvironmentVariable("Path", "User")
 
 ## Những Gì Được Cài Đặt
 
+**Vị Trí Tệp Thực Thi**:
+- macOS / Linux: `~/.local/bin/ccs` (symlink đến `~/.ccs/ccs`)
+- Windows: `%USERPROFILE%\.ccs\ccs.ps1`
+
+**Thư Mục Cấu Hình** (`~/.ccs/`):
 ```bash
 ~/.ccs/
-├── ccs                     # Tệp thực thi chính
+├── ccs                     # Tệp thực thi chính (symlink target)
 ├── config.json             # Cấu hình profile
+├── config.json.backup      # Bản backup duy nhất (ghi đè mỗi lần cài)
 ├── glm.settings.json       # Profile GLM
+├── VERSION                 # File version
+├── uninstall.sh            # Trình gỡ cài đặt
 └── .claude/                # Tích hợp Claude Code
     ├── commands/ccs.md     # meta-command /ccs
     └── skills/             # Kỹ năng delegation
@@ -109,11 +139,44 @@ git pull
 irm ccs.kaitran.ca/install.ps1 | iex
 ```
 
+## Cấu Hình PATH Tự Động
+
+Installer tự động cấu hình PATH của shell:
+
+**Shell Được Hỗ Trợ**:
+- bash (`.bashrc` hoặc `.bash_profile`)
+- zsh (`.zshrc`)
+- fish (`.config/fish/config.fish`)
+
+**Cách Hoạt Động**:
+1. Phát hiện shell hiện tại từ biến môi trường `$SHELL`
+2. Kiểm tra nếu `~/.local/bin` đã có trong PATH
+3. Nếu chưa, thêm export phù hợp vào shell profile
+4. Hiển thị hướng dẫn reload
+
+**Idempotent**:
+- An toàn khi chạy nhiều lần
+- Kiểm tra entry PATH của CCS trước khi thêm
+- Không tạo entry trùng lặp
+
+**Thiết Lập PATH Thủ Công** (nếu auto-config thất bại):
+
+Bash/Zsh:
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc  # hoặc ~/.zshrc
+source ~/.bashrc  # hoặc source ~/.zshrc
+```
+
+Fish:
+```fish
+echo 'set -gx PATH $HOME/.local/bin $PATH' >> ~/.config/fish/config.fish
+```
+
 ## Yêu Cầu
 
 ### macOS / Linux
 - `bash` 3.2+
-- `jq` (trình xử lý JSON)
+- `jq` (trình xử lý JSON, tùy chọn cho tính năng nâng cao)
 - [Claude CLI](https://docs.claude.com/en/docs/claude-code/installation)
 
 ### Windows
@@ -136,4 +199,7 @@ sudo dnf install jq
 sudo pacman -S jq
 ```
 
-**Lưu ý**: Phiên bản Windows dùng JSON support có sẵn của PowerShell - không cần jq.
+**Lưu ý**:
+- jq nâng cao quá trình tạo profile GLM nhưng không bắt buộc
+- Windows dùng JSON support có sẵn của PowerShell - không cần jq
+- Installer tạo template cơ bản mà không cần jq

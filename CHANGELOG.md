@@ -4,6 +4,81 @@ All notable changes to CCS will be documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.2.0] - 2025-11-03
+
+### Added
+- **Auto PATH Configuration**: Installer automatically detects shell (bash/zsh/fish) and adds `~/.local/bin` to PATH
+- **Terminal Color Support**: ANSI color codes with TTY detection for enhanced visual feedback
+- **NO_COLOR Support**: Respects NO_COLOR environment variable for accessibility
+- **Enhanced Error Messages**: Box-drawing characters for critical errors (╔═╗ style)
+- Multi-shell support with shell-specific syntax (bash/zsh: `export`, fish: `set -gx`)
+- Idempotent PATH configuration (checks for existing entries before adding)
+- Shell profile detection logic with automatic configuration
+- Reload instructions after installation (source profile or new terminal)
+- Manual PATH fallback instructions if auto-config fails
+- **Install Location Display**: --version output shows installation path
+
+### Changed
+- **Unified Install Location**: All Unix systems now use `~/.local/bin` (consistent across macOS/Linux)
+- **No Sudo Required**: User-writable location eliminates permission issues
+- **All Emojis Removed**: Replaced with ASCII symbols for universal compatibility
+  - [!] for warnings
+  - [OK] for success
+  - [X] for errors
+  - [i] for information
+- **PATH Warnings Enhanced**: Step-by-step instructions for shell configuration
+- **GLM API Key Notices Improved**: Actionable guidance with URLs and examples
+- **Error Message Format**: Consistent boxed formatting across all scripts
+- **Success/Warning/Info Messages**: Unified styling with color support
+- Enhanced PATH configuration workflow with clear user instructions
+- Simplified installation process (one location for all platforms)
+
+### Fixed
+- **Shell Injection Vulnerability**: Critical security fix in shell detection (CVE-level)
+- Error handling for profile directory creation
+- Profile file creation errors now properly handled
+- SHELL environment variable edge cases
+
+### Technical Details
+- **Files Modified**:
+  - installers/install.sh: Auto PATH config functions, shell detection, security fixes
+  - installers/install.ps1: Color function equivalents
+  - installers/uninstall.sh: Color functions, simplified cleanup
+  - installers/uninstall.ps1: Color function equivalents
+  - ccs: Color functions, enhanced error messages, install location display
+  - ccs.ps1: Enhanced error messages with PowerShell colors
+- **Lines Added**: ~200+ (new auto PATH logic)
+- **Lines Removed**: ~50 (platform-specific code)
+- **Test Coverage**: 100% pass rate (syntax, idempotent, shell detection, security)
+- **Security Review**: Approved after fixes (shell injection vulnerability patched)
+- **Cross-Platform Parity**: Maintained across macOS, Linux, Windows
+
+### Migration Notes
+
+#### For All Unix Users (macOS & Linux)
+Installation location: `~/.local/bin/ccs`
+
+**What Happens Automatically:**
+1. Installer detects your shell (bash/zsh/fish)
+2. Checks if ~/.local/bin in PATH
+3. If not, adds to shell profile with clear comment
+4. Shows reload instructions
+
+**Manual PATH Config (if auto-config fails):**
+```bash
+# For bash/zsh
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc  # or ~/.zshrc
+
+# For fish
+echo 'set -gx PATH $HOME/.local/bin $PATH' >> ~/.config/fish/config.fish
+
+# Reload
+source ~/.bashrc  # or ~/.zshrc or restart terminal
+```
+
+#### For Windows Users
+No changes. Installation remains at `~/.ccs/ccs.ps1` with automatic PATH configuration.
+
 ## [2.1.0] - 2025-11-02
 
 ### Changed

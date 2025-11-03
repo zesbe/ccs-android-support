@@ -75,9 +75,57 @@ ccs glm /code "implement feature"
 ### Lệnh Tiện Ích
 
 ```bash
-ccs --version    # Hiển thị phiên bản CCS
+ccs --version    # Hiển thị phiên bản CCS và vị trí cài đặt
 ccs --help       # Hiển thị trợ giúp Claude CLI
+ccs --install    # Cài đặt commands và skills CCS vào ~/.claude/
 ```
+
+**Ví Dụ Output `--version`**:
+```
+CCS (Claude Code Switch) version 2.2.0
+Installed at: ~/.local/bin/ccs -> ~/.ccs/ccs
+https://github.com/kaitranntt/ccs
+```
+
+### Cài Đặt Commands và Skills
+
+Để sử dụng tính năng delegation tác vụ, bạn cần cài đặt commands và skills CCS vào thư mục Claude CLI:
+
+```bash
+# Cài đặt commands và skills delegation CCS
+ccs --install
+```
+
+Điều này sẽ:
+- Copy lệnh `/ccs` vào `~/.claude/commands/ccs.md`
+- Copy skill `ccs-delegation` vào `~/.claude/skills/ccs-delegation/`
+- Bỏ qua file đã tồn tại (không ghi đè customization của bạn)
+
+**Ví Dụ Output**:
+```
+┌─ Installing CCS Commands & Skills
+│  Source: /path/to/ccs/.claude
+│  Target: /home/user/.claude
+│
+│  Installing commands...
+│  │  [OK]  Installed command: ccs.md
+│
+│  Installing skills...
+│  │  [OK]  Installed skill: ccs-delegation
+└─
+
+[OK] Installation complete!
+  Installed: 2 items
+  Skipped: 0 items (already exist)
+
+You can now use the /ccs command in Claude CLI for task delegation.
+Example: /ccs glm /plan 'add user authentication'
+```
+
+**Lưu ý**:
+- Output dùng ký hiệu ASCII ([OK], [i], [X]) thay vì emoji
+- Output có màu trên terminal TTY (tắt với `NO_COLOR=1`)
+- File đã tồn tại tự động bỏ qua (an toàn khi chạy lại)
 
 ## Delegation Tác Vụ
 

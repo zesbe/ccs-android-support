@@ -31,7 +31,7 @@ fi
 # IMPORTANT: Update this version when releasing new versions!
 # This hardcoded version is used for standalone installations (curl | bash)
 # For git installations, VERSION file is read if available
-CCS_VERSION="2.1.3"
+CCS_VERSION="2.2.0"
 
 # Try to read VERSION file for git installations
 if [[ -f "$SCRIPT_DIR/VERSION" ]]; then
@@ -89,6 +89,175 @@ detect_current_provider() {
   fi
 }
 
+# --- Color/Format Functions (ANSI) ---
+setup_colors() {
+  if [[ -t 1 ]] && [[ -z "${NO_COLOR:-}" ]]; then
+    RED='\033[0;31m'
+    GREEN='\033[0;32m'
+    YELLOW='\033[1;33m'
+    CYAN='\033[0;36m'
+    BOLD='\033[1m'
+    RESET='\033[0m'
+  else
+    RED='' GREEN='' YELLOW='' CYAN='' BOLD='' RESET=''
+  fi
+}
+
+msg_critical() {
+  echo "" >&2
+  echo -e "${RED}${BOLD}╔═════════════════════════════════════════════╗${RESET}" >&2
+  echo -e "${RED}${BOLD}║  ACTION REQUIRED                            ║${RESET}" >&2
+  echo -e "${RED}${BOLD}╚═════════════════════════════════════════════╝${RESET}" >&2
+  echo "" >&2
+  echo -e "${RED}$1${RESET}" >&2
+  echo "" >&2
+}
+
+msg_warning() {
+  echo "" >&2
+  echo -e "${YELLOW}${BOLD}[!] WARNING${RESET}" >&2
+  echo -e "${YELLOW}$1${RESET}" >&2
+  echo "" >&2
+}
+
+msg_success() {
+  echo -e "${GREEN}[OK] $1${RESET}"
+}
+
+msg_info() {
+  echo -e "[i] $1"
+}
+
+msg_section() {
+  echo ""
+  echo -e "${BOLD}===== $1 =====${RESET}"
+  echo ""
+}
+
+setup_colors
+
+# --- Shell Profile Management ---
+
+detect_shell_profile() {
+  # Safe extraction of shell name (no command substitution)
+  local shell_path="${SHELL:-/bin/bash}"
+  local shell_name="${shell_path##*/}"
+
+  # Validate shell_name is alphanumeric (defense in depth)
+  if [[ ! "$shell_name" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+    shell_name="bash"
+  fi
+
+  case "$shell_name" in
+    zsh)
+      echo "$HOME/.zshrc"
+      ;;
+    bash)
+      if [[ "$OSTYPE" == darwin* ]]; then
+        # macOS prefers bash_profile
+        [[ -f "$HOME/.bash_profile" ]] && echo "$HOME/.bash_profile" || echo "$HOME/.bashrc"
+      else
+        echo "$HOME/.bashrc"
+      fi
+      ;;
+    fish)
+      echo "$HOME/.config/fish/config.fish"
+      ;;
+    *)
+      # Default to bashrc
+      echo "$HOME/.bashrc"
+      ;;
+  esac
+}
+
+check_path_configured() {
+  [[ ":$PATH:" == *":$HOME/.local/bin:"* ]]
+}
+
+add_to_path() {
+  local profile_file="$1"
+  local dir_to_add="$HOME/.local/bin"
+
+  # Create profile file if doesn't exist
+  if [[ ! -f "$profile_file" ]]; then
+    local profile_dir="$(dirname "$profile_file")"
+
+    if ! mkdir -p "$profile_dir" 2>/dev/null; then
+      echo "[!] Failed to create directory: $profile_dir" >&2
+      return 1
+    fi
+
+    if ! touch "$profile_file" 2>/dev/null; then
+      echo "[!] Failed to create profile file: $profile_file" >&2
+      return 1
+    fi
+  fi
+
+  # Check if already in profile (avoid duplicates)
+  if grep -q "# CCS: Added by Claude Code Switch installer" "$profile_file" 2>/dev/null; then
+    return 0  # Already added
+  fi
+
+  # Check for fish shell (different syntax)
+  if [[ "$profile_file" == *"config.fish" ]]; then
+    cat >> "$profile_file" << 'EOF'
+
+# CCS: Added by Claude Code Switch installer
+set -gx PATH $HOME/.local/bin $PATH
+EOF
+  else
+    # Bash/Zsh syntax
+    cat >> "$profile_file" << 'EOF'
+
+# CCS: Added by Claude Code Switch installer
+export PATH="$HOME/.local/bin:$PATH"
+EOF
+  fi
+
+  return 0
+}
+
+configure_shell_path() {
+  if check_path_configured; then
+    msg_info "PATH already configured for ~/.local/bin"
+    return 0
+  fi
+
+  local profile_file=$(detect_shell_profile)
+
+  echo ""
+  msg_section "Configuring Shell PATH"
+  msg_info "Detected shell profile: $profile_file"
+
+  if add_to_path "$profile_file"; then
+    msg_success "Added ~/.local/bin to PATH in $profile_file"
+    echo ""
+
+    # Show reload instructions
+    msg_critical "Reload your shell to use 'ccs' command:
+
+    Option 1 (current session):
+      source $profile_file
+
+    Option 2 (new session):
+      Open a new terminal window
+
+    Then verify:
+      ccs --version"
+
+    return 0
+  else
+    msg_warning "Could not auto-configure PATH
+
+    Manually add this line to $profile_file:
+      export PATH=\"\$HOME/.local/bin:\$PATH\"
+
+    Then reload:
+      source $profile_file"
+    return 1
+  fi
+}
+
 create_glm_template() {
   cat << EOF
 {
@@ -111,7 +280,7 @@ atomic_mv() {
     return 0
   else
     rm -f "$src"
-    echo "  ✗ Error: Failed to create $dest (check permissions)"
+    echo "  [X] Error: Failed to create $dest (check permissions)"
     exit 1
   fi
 }
@@ -121,7 +290,7 @@ download_file() {
   local dest="$2"
 
   if ! curl -fsSL "$url" -o "$dest"; then
-    echo "  ⚠ Failed to download: $(basename "$dest")"
+    echo "  [!] Failed to download: $(basename "$dest")"
     return 1
   fi
   return 0
@@ -133,7 +302,7 @@ install_claude_folder() {
 
   # Check if already exists
   if [[ -d "$target_dir" ]]; then
-    echo "│  ℹ .claude/ folder already exists, skipping"
+    echo "|  [i] .claude/ folder already exists, skipping"
     return 0
   fi
 
@@ -143,12 +312,12 @@ install_claude_folder() {
     # Copy from local git repo
     if [[ -d "$source_dir/.claude" ]]; then
       cp -r "$source_dir/.claude"/* "$target_dir/" 2>/dev/null || {
-        echo "│  ⚠ Failed to copy .claude/ folder"
+        echo "|  [!] Failed to copy .claude/ folder"
         return 1
       }
-      echo "│  ✓ Installed .claude/ folder"
+      echo "|  [OK] Installed .claude/ folder"
     else
-      echo "│  ⚠ .claude/ folder not found in source"
+      echo "|  [!] .claude/ folder not found in source"
       return 1
     fi
   else
@@ -159,7 +328,7 @@ install_claude_folder() {
     download_file "$base_url/skills/ccs-delegation/SKILL.md" "$target_dir/skills/ccs-delegation/SKILL.md" || return 1
     download_file "$base_url/skills/ccs-delegation/references/delegation-patterns.md" "$target_dir/skills/ccs-delegation/references/delegation-patterns.md" || return 1
 
-    echo "│  ✓ Downloaded .claude/ folder"
+    echo "|  [OK] Downloaded .claude/ folder"
   fi
 
   return 0
@@ -171,7 +340,7 @@ create_glm_profile() {
   local provider="$1"
 
   if [[ "$provider" == "glm" ]]; then
-    echo "✓ Copying current GLM config to profile..."
+    echo "[OK] Copying current GLM config to profile..."
     if command -v jq &> /dev/null; then
       if jq '.env |= (. // {}) + {
         "ANTHROPIC_DEFAULT_OPUS_MODEL": "'"$GLM_MODEL"'",
@@ -203,14 +372,14 @@ create_glm_profile() {
         atomic_mv "$glm_settings.tmp" "$glm_settings"
       else
         rm -f "$glm_settings.tmp"
-        echo "  ℹ  jq failed, using basic template"
+        echo "  [i]  jq failed, using basic template"
         create_glm_template > "$glm_settings"
       fi
     else
       create_glm_template > "$glm_settings"
     fi
     echo "  Created: $glm_settings"
-    echo "  ⚠  Edit this file and replace YOUR_GLM_API_KEY_HERE with your actual GLM API key"
+    echo "  [!]  Edit this file and replace YOUR_GLM_API_KEY_HERE with your actual GLM API key"
   fi
 }
 
@@ -225,17 +394,17 @@ mkdir -p "$INSTALL_DIR" "$CCS_DIR"
 if [[ "$INSTALL_METHOD" == "standalone" ]]; then
   # Standalone install - download ccs from GitHub
   if ! command -v curl &> /dev/null; then
-    echo "✗ Error: curl is required for standalone installation"
+    echo "[X] Error: curl is required for standalone installation"
     exit 1
   fi
 
   if curl -fsSL https://raw.githubusercontent.com/kaitranntt/ccs/main/ccs -o "$CCS_DIR/ccs"; then
     chmod +x "$CCS_DIR/ccs"
     ln -sf "$CCS_DIR/ccs" "$INSTALL_DIR/ccs"
-    echo "│  ✓ Downloaded executable"
+    echo "|  [OK] Downloaded executable"
   else
-    echo "│"
-    echo "✗ Error: Failed to download ccs from GitHub"
+    echo "|"
+    echo "[X] Error: Failed to download ccs from GitHub"
     exit 1
   fi
 else
@@ -248,25 +417,25 @@ else
     chmod +x "$SCRIPT_DIR/../ccs"
     ln -sf "$SCRIPT_DIR/../ccs" "$INSTALL_DIR/ccs"
   else
-    echo "│"
-    echo "✗ Error: ccs executable not found"
+    echo "|"
+    echo "[X] Error: ccs executable not found"
     exit 1
   fi
-  echo "│  ✓ Installed executable"
+  echo "|  [OK] Installed executable"
 
   # Copy VERSION file if available (for proper version display)
   if [[ -f "$SCRIPT_DIR/VERSION" ]]; then
     cp "$SCRIPT_DIR/VERSION" "$CCS_DIR/VERSION"
-    echo "│  ✓ Installed VERSION file"
+    echo "|  [OK] Installed VERSION file"
   elif [[ -f "$SCRIPT_DIR/../VERSION" ]]; then
     cp "$SCRIPT_DIR/../VERSION" "$CCS_DIR/VERSION"
-    echo "│  ✓ Installed VERSION file"
+    echo "|  [OK] Installed VERSION file"
   fi
 fi
 
 if [[ ! -L "$INSTALL_DIR/ccs" ]]; then
-  echo "│"
-  echo "✗ Error: Failed to create symlink at $INSTALL_DIR/ccs"
+  echo "|"
+  echo "[X] Error: Failed to create symlink at $INSTALL_DIR/ccs"
   echo "  Check directory permissions and try again."
   exit 1
 fi
@@ -279,22 +448,22 @@ if [[ -f "$SCRIPT_DIR/uninstall.sh" ]]; then
   fi
   chmod +x "$CCS_DIR/uninstall.sh"
   ln -sf "$CCS_DIR/uninstall.sh" "$INSTALL_DIR/ccs-uninstall"
-  echo "│  ✓ Installed uninstaller"
+  echo "|  [OK] Installed uninstaller"
 elif [[ "$INSTALL_METHOD" == "standalone" ]] && command -v curl &> /dev/null; then
   if curl -fsSL https://raw.githubusercontent.com/kaitranntt/ccs/main/installers/uninstall.sh -o "$CCS_DIR/uninstall.sh"; then
     chmod +x "$CCS_DIR/uninstall.sh"
     ln -sf "$CCS_DIR/uninstall.sh" "$INSTALL_DIR/ccs-uninstall"
-    echo "│  ✓ Installed uninstaller"
+    echo "|  [OK] Installed uninstaller"
   fi
 fi
 
-echo "│  ✓ Created directories"
+echo "|  [OK] Created directories"
 
 # Install .claude/ folder
 if [[ "$INSTALL_METHOD" == "git" ]]; then
-  install_claude_folder "$SCRIPT_DIR/.." || echo "│  ⚠ Optional .claude/ installation skipped"
+  install_claude_folder "$SCRIPT_DIR/.." || echo "|  [!] Optional .claude/ installation skipped"
 else
-  install_claude_folder "" || echo "│  ⚠ Optional .claude/ installation skipped"
+  install_claude_folder "" || echo "|  [!] Optional .claude/ installation skipped"
 fi
 
 echo "└─"
@@ -325,7 +494,7 @@ NEEDS_GLM_KEY=false
 # Create GLM profile if missing
 if [[ ! -f "$GLM_SETTINGS" ]]; then
   create_glm_profile "$CURRENT_PROVIDER" >/dev/null 2>&1
-  echo "│  ✓ GLM profile → ~/.ccs/glm.settings.json"
+  echo "|  [OK] GLM profile -> ~/.ccs/glm.settings.json"
   [[ "$CURRENT_PROVIDER" != "glm" ]] && NEEDS_GLM_KEY=true
 fi
 
@@ -340,16 +509,16 @@ if [[ ! -f "$CCS_DIR/config.json" ]]; then
 }
 EOF
   atomic_mv "$CCS_DIR/config.json.tmp" "$CCS_DIR/config.json"
-  echo "│  ✓ Config → ~/.ccs/config.json"
+  echo "|  [OK] Config -> ~/.ccs/config.json"
 fi
 
 # Validate config JSON
 if [[ -f "$CCS_DIR/config.json" ]]; then
   if command -v jq &> /dev/null; then
     if ! jq -e . "$CCS_DIR/config.json" &>/dev/null; then
-      echo "│  ⚠  Warning: Invalid JSON in config.json"
+      echo "|  [!]  Warning: Invalid JSON in config.json"
       if [[ -f "$BACKUP_FILE" ]]; then
-        echo "│     Restore from: $BACKUP_FILE"
+        echo "|     Restore from: $BACKUP_FILE"
       fi
     fi
   fi
@@ -359,7 +528,7 @@ fi
 if [[ -f "$GLM_SETTINGS" ]]; then
   if command -v jq &> /dev/null; then
     if ! jq -e . "$GLM_SETTINGS" &>/dev/null; then
-      echo "│  ⚠  Warning: Invalid JSON in glm.settings.json"
+      echo "|  [!]  Warning: Invalid JSON in glm.settings.json"
     fi
   fi
 fi
@@ -367,31 +536,30 @@ fi
 echo "└─"
 echo ""
 
-# Check PATH warning
-if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
-  echo "⚠  PATH Configuration Required"
-  echo ""
-  echo "   Add to your shell profile (~/.bashrc or ~/.zshrc):"
-  echo "     export PATH=\"\$HOME/.local/bin:\$PATH\""
-  echo ""
-fi
+# Auto-configure PATH if needed (all Unix platforms)
+configure_shell_path
 
 # Show API key warning if needed
 if [[ "$NEEDS_GLM_KEY" == "true" ]]; then
-  echo "⚠  ACTION REQUIRED"
-  echo ""
-  echo "   Edit ~/.ccs/glm.settings.json and add your GLM API key"
-  echo "   Replace: YOUR_GLM_API_KEY_HERE"
-  echo ""
+  msg_critical "Configure GLM API Key:
+
+    1. Get API key from: https://api.z.ai
+
+    2. Edit: ~/.ccs/glm.settings.json
+
+    3. Replace: YOUR_GLM_API_KEY_HERE
+       With your actual API key
+
+    4. Test: ccs glm --version"
 fi
 
-echo "✓ CCS installed successfully!"
+msg_success "CCS installed successfully!"
 echo ""
 echo "   Installed components:"
-echo "     • ccs command        → ~/.local/bin/ccs"
-echo "     • config             → ~/.ccs/config.json"
-echo "     • glm profile        → ~/.ccs/glm.settings.json"
-echo "     • .claude/ folder    → ~/.ccs/.claude/"
+echo "     * ccs command        -> ~/.local/bin/ccs"
+echo "     * config             -> ~/.ccs/config.json"
+echo "     * glm profile        -> ~/.ccs/glm.settings.json"
+echo "     * .claude/ folder    -> ~/.ccs/.claude/"
 echo ""
 echo "   Quick start:"
 echo "     ccs           # Use Claude subscription (default)"

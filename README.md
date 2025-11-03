@@ -52,7 +52,7 @@ irm ccs.kaitran.ca/install | iex
 ```bash
 ccs              # Use Claude subscription (default)
 ccs glm          # Use GLM fallback
-ccs --version    # Show CCS version
+ccs --version    # Show CCS version and install location
 ccs --install    # Install CCS commands and skills to ~/.claude/
 ```
 

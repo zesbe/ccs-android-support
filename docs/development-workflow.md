@@ -52,24 +52,74 @@ User Command: ccs [profile] [claude-args...]
 
 ### Process
 
-1. **Create directories**: `~/.ccs/`, `~/.local/bin/`
-2. **Install executables**:
+1. **Platform Detection**: Windows vs Unix
+2. **Create directories**: `~/.ccs/`, `~/.local/bin`
+3. **Clean old installs**: Remove old `/usr/local/bin` installations (if CCS symlinks)
+4. **Install executables**:
    - Git mode: Symlink from repo
    - Standalone: Download from GitHub
-3. **Install .claude folder**: Commands and skills
-4. **Create config**: `config.json` if missing
-5. **Create GLM profile**: `glm.settings.json` if missing
-6. **Backup**: Single `config.json.backup` (overwrites)
-7. **Validate**: Check JSON syntax
+5. **Install .claude folder**: Commands and skills
+6. **Create config**: `config.json` if missing
+7. **Create GLM profile**: `glm.settings.json` if missing
+8. **Backup**: Single `config.json.backup` (overwrites)
+9. **Validate**: Check JSON syntax
+10. **Configure PATH**: Auto-detect shell, add to profile
+11. **Display instructions**: Shell reload, GLM API key (if needed)
+
+### Unified Install Location (v2.2.0+)
+
+**All Unix Systems**: `~/.local/bin/ccs`
+- User-writable, no sudo required
+- Auto PATH configuration for bash, zsh, fish
+- Idempotent setup (safe to run multiple times)
+
+**Windows**: `%USERPROFILE%\.ccs\ccs.ps1`
+- Auto-added to user PATH
+
+### Shell Profile Management
+
+**Auto-detection** (`detect_shell_profile()`):
+- Extracts shell from `$SHELL` variable
+- Returns appropriate profile file:
+  - bash: `~/.bashrc` (Linux) or `~/.bash_profile` (macOS)
+  - zsh: `~/.zshrc`
+  - fish: `~/.config/fish/config.fish`
+- Validates shell name (alphanumeric only)
+- Defaults to `~/.bashrc` if unknown
+
+**PATH checking** (`check_path_configured()`):
+- Tests if `~/.local/bin` in current `$PATH`
+- Returns true if already configured
+
+**PATH addition** (`add_to_path()`):
+- Creates profile file if missing
+- Checks for existing CCS marker comment
+- Adds shell-specific PATH export:
+  - bash/zsh: `export PATH="$HOME/.local/bin:$PATH"`
+  - fish: `set -gx PATH $HOME/.local/bin $PATH`
+- Idempotent: skips if already added
+
+**Configuration workflow** (`configure_shell_path()`):
+- Checks if PATH already configured
+- Detects shell profile
+- Adds PATH entry
+- Shows reload instructions
+- Fallback to manual instructions if fails
 
 ### Files Created
 
+**Executable Locations**:
+- macOS / Linux: `~/.local/bin/ccs` (symlink to `~/.ccs/ccs`)
+- Windows: `%USERPROFILE%\.ccs\ccs.ps1`
+
+**Configuration Directory** (`~/.ccs/`):
 ```
 ~/.ccs/
-├── ccs                     # Main executable
+├── ccs                     # Main executable (symlink target)
 ├── config.json             # Profile mappings
 ├── config.json.backup      # Single backup (no timestamp)
 ├── glm.settings.json       # GLM profile
+├── VERSION                 # Version file
 ├── uninstall.sh            # Uninstaller
 └── .claude/                # Claude Code integration
     ├── commands/ccs.md
@@ -176,16 +226,75 @@ exec claude --settings <path> [args]
 
 ---
 
+## Terminal Output Standards
+
+### Color Functions
+
+**TTY Detection**: Colors only shown when output is to terminal (not piped/redirected)
+```bash
+if [[ -t 2 ]] && [[ -z "${NO_COLOR:-}" ]]; then
+  # Enable colors
+else
+  # Disable colors
+fi
+```
+
+**NO_COLOR Support**: Respects `NO_COLOR` environment variable
+```bash
+export NO_COLOR=1  # Disables all color output
+```
+
+### Message Types
+
+**Error Messages** (red, boxed):
+```
+╔═════════════════════════════════════════════╗
+║  ERROR                                      ║
+╚═════════════════════════════════════════════╝
+```
+
+**Critical Messages** (red, boxed, "ACTION REQUIRED"):
+```
+╔═════════════════════════════════════════════╗
+║  ACTION REQUIRED                            ║
+╚═════════════════════════════════════════════╝
+```
+
+**Warning Messages** (yellow):
+```
+[!] WARNING
+```
+
+**Success Messages** (green):
+```
+[OK] Success message
+```
+
+**Info Messages** (plain):
+```
+[i] Information
+```
+
+### ASCII Symbols (No Emojis)
+
+All output uses ASCII symbols for compatibility:
+- `[OK]` - Success
+- `[!]` - Warning
+- `[X]` - Error/Failure
+- `[i]` - Information
+
 ## Key Points
 
-1. **Installation**: Creates 2 profiles (glm + default), validates JSON
+1. **Installation**: Unified location (`~/.local/bin`), auto PATH config, validates JSON
 2. **Runtime**: Simple delegation to Claude CLI via `--settings` flag
-3. **Cross-platform**: Identical behavior on Unix/Linux/macOS/Windows
+3. **Cross-platform**: Unified Unix location, identical behavior
 4. **Non-invasive**: Never touches `~/.claude/settings.json`
 5. **Validation**: JSON syntax checking prevents errors
 6. **Backup**: Single file, overwrites each install
+7. **Terminal Output**: TTY detection, NO_COLOR support, ASCII symbols only
+8. **Shell Support**: Auto-detects bash, zsh, fish
 
 ---
 
-**Version**: v2.0.0
-**Updated**: 2025-11-02
+**Version**: v2.2.0
+**Updated**: 2025-11-03

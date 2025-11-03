@@ -66,12 +66,31 @@ Installer tự động tạo config và mẫu profile trong quá trình cài đ�
 
 Không có magic. Không sửa file. Chuyển giao thuần túy. Hoạt động giống nhau trên tất cả nền tảng.
 
-## Vị Trí Config Tùy Chỉnh
+## Biến Môi Trường
 
+### CCS_CONFIG
+
+Ghi đè vị trí config mặc định:
 ```bash
 export CCS_CONFIG=~/my-custom-config.json
 ccs glm
 ```
+
+### NO_COLOR
+
+Tắt output màu trên terminal:
+```bash
+export NO_COLOR=1
+ccs glm
+```
+
+**Trường Hợp Sử Dụng**:
+- CI/CD pipelines
+- Log files
+- Terminal không hỗ trợ màu
+- Tùy chọn trợ năng
+
+Khi `NO_COLOR` được đặt, CCS sử dụng output ASCII thuần không có mã màu ANSI.
 
 ## Lưu Ý Tùy Theo Nền Tảng
 
