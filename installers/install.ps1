@@ -11,6 +11,7 @@ $ErrorActionPreference = "Stop"
 $CcsDir = "$env:USERPROFILE\.ccs"
 $ClaudeDir = "$env:USERPROFILE\.claude"
 $GlmModel = "glm-4.6"
+$KimiModel = "kimi-for-coding"
 
 # Detect if running from git repository or standalone
 $ScriptDir = if ($MyInvocation.MyCommand.Path) {
@@ -30,7 +31,7 @@ $InstallMethod = if ($ScriptDir -and ((Test-Path "$ScriptDir\lib\ccs.ps1") -or (
 # IMPORTANT: Update this version when releasing new versions!
 # This hardcoded version is used for standalone installations (irm | iex)
 # For git installations, VERSION file is read if available
-$CcsVersion = "2.4.9"
+$CcsVersion = "2.5.0"
 
 # Try to read VERSION file for git installations
 if ($ScriptDir) {
@@ -94,9 +95,11 @@ function Detect-CurrentProvider {
 
     try {
         $Content = Get-Content $SettingsFile -Raw
-        if ($Content -match "api\.z\.ai|glm-4") {
+        if ($Content -match "api\.kimi\.com|kimi-for-coding") {
+            return "kimi"
+        } elseif ($Content -match "api\.z\.ai|glm-4") {
             return "glm"
-        } elseif ($Content -match "ANTHROPIC_BASE_URL" -and $Content -notmatch "api\.z\.ai") {
+        } elseif ($Content -match "ANTHROPIC_BASE_URL" -and $Content -notmatch "api\.z\.ai|api\.kimi\.com") {
             return "custom"
         } else {
             return "claude"
@@ -149,6 +152,54 @@ function New-GlmProfile {
         New-GlmTemplate | Set-Content $GlmSettings
         Write-Host "  Created: $GlmSettings"
         Write-Host "  [!]  Edit this file and replace YOUR_GLM_API_KEY_HERE with your actual GLM API key"
+    }
+}
+
+function New-KimiTemplate {
+    $Template = @{
+        env = @{
+            ANTHROPIC_BASE_URL = "https://api.kimi.com/coding/"
+            ANTHROPIC_AUTH_TOKEN = "YOUR_KIMI_API_KEY_HERE"
+            ANTHROPIC_MODEL = $KimiModel
+            ANTHROPIC_DEFAULT_OPUS_MODEL = $KimiModel
+            ANTHROPIC_DEFAULT_SONNET_MODEL = $KimiModel
+            ANTHROPIC_DEFAULT_HAIKU_MODEL = $KimiModel
+        }
+        alwaysThinkingEnabled = $true
+    }
+    return $Template | ConvertTo-Json -Depth 10
+}
+
+function New-KimiProfile {
+    param([string]$Provider)
+
+    $CurrentSettings = "$ClaudeDir\settings.json"
+    $KimiSettings = "$CcsDir\kimi.settings.json"
+
+    if ($Provider -eq "kimi" -and (Test-Path $CurrentSettings)) {
+        Write-Host "[OK] Copying current Kimi config to profile..."
+
+        try {
+            $Config = Get-Content $CurrentSettings -Raw | ConvertFrom-Json
+            if (-not $Config.env) {
+                $Config | Add-Member -NotePropertyName env -NotePropertyValue @{} -Force
+            }
+            $Config.env | Add-Member -NotePropertyName ANTHROPIC_DEFAULT_OPUS_MODEL -NotePropertyValue $KimiModel -Force
+            $Config.env | Add-Member -NotePropertyName ANTHROPIC_DEFAULT_SONNET_MODEL -NotePropertyValue $KimiModel -Force
+            $Config.env | Add-Member -NotePropertyName ANTHROPIC_DEFAULT_HAIKU_MODEL -NotePropertyValue $KimiModel -Force
+            $Config | Add-Member -NotePropertyName alwaysThinkingEnabled -NotePropertyValue $true -Force
+
+            $Config | ConvertTo-Json -Depth 10 | Set-Content $KimiSettings
+            Write-Host "  Created: $KimiSettings with your existing API key + enhanced settings"
+        } catch {
+            Write-Host "  [i]  Copying current settings failed, using template"
+            New-KimiTemplate | Set-Content $KimiSettings
+        }
+    } else {
+        Write-Host "Creating Kimi profile template at $KimiSettings"
+        New-KimiTemplate | Set-Content $KimiSettings
+        Write-Host "  Created: $KimiSettings"
+        Write-Host "  [!]  Edit this file and replace YOUR_KIMI_API_KEY_HERE with your actual Kimi API key"
     }
 }
 
@@ -286,6 +337,7 @@ $CurrentProvider = Detect-CurrentProvider
 
 $ProviderLabel = switch ($CurrentProvider) {
     "glm" { ' (detected: GLM)' }
+    "kimi" { ' (detected: Kimi)' }
     "claude" { ' (detected: Claude)' }
     "custom" { ' (detected: custom)' }
     default { "" }
@@ -313,11 +365,25 @@ if (-not (Test-Path $GlmSettings)) {
     Write-Host '|  [OK] GLM profile exists'
 }
 
+$NeedsKimiKey = $false
+$KimiSettings = "$CcsDir\kimi.settings.json"
+
+# Create Kimi profile if missing
+if (-not (Test-Path $KimiSettings)) {
+    New-KimiProfile -Provider $CurrentProvider
+    if ($CurrentProvider -ne "kimi") {
+        $NeedsKimiKey = $true
+    }
+} else {
+    Write-Host '|  [OK] Kimi profile exists'
+}
+
 # Create config if missing
 if (-not (Test-Path $ConfigFile)) {
     $ConfigContent = @{
         profiles = @{
             glm = "~/.ccs/glm.settings.json"
+            kimi = "~/.ccs/kimi.settings.json"
             default = "~/.claude/settings.json"
         }
     }
@@ -385,17 +451,35 @@ Configure GLM API Key:
 "@
 }
 
+# Show API key warning for Kimi if needed
+if ($NeedsKimiKey) {
+    Write-Critical @"
+Configure Kimi API Key:
+
+    1. Get API key from: https://www.kimi.com/coding
+
+    2. Edit: $env:USERPROFILE\.ccs\kimi.settings.json
+
+    3. Replace: YOUR_KIMI_API_KEY_HERE
+       With your actual API key
+
+    4. Test: ccs kimi --version
+"@
+}
+
 Write-Success "CCS installed successfully!"
 Write-Host ""
 Write-Host "   Installed components:"
 Write-Host "     * ccs command        -> $CcsDir\ccs.ps1"
 Write-Host "     * config             -> $CcsDir\config.json"
 Write-Host "     * glm profile        -> $CcsDir\glm.settings.json"
+Write-Host "     * kimi profile       -> $CcsDir\kimi.settings.json"
 Write-Host "     * .claude/ folder    -> $CcsDir\.claude\"
 Write-Host ""
 Write-Host "   Quick start:"
 Write-Host "     ccs           # Use Claude subscription (default)"
 Write-Host "     ccs glm       # Use GLM fallback"
+Write-Host "     ccs kimi      # Use Kimi for Coding"
 Write-Host ""
 Write-Host ""
 Write-Host "   To uninstall: ccs-uninstall"

@@ -32,6 +32,7 @@ function createConfigFiles() {
       const config = {
         profiles: {
           glm: '~/.ccs/glm.settings.json',
+          kimi: '~/.ccs/kimi.settings.json',
           default: '~/.claude/settings.json'
         }
       };
@@ -73,6 +74,36 @@ function createConfigFiles() {
       console.log('      3. Replace: YOUR_GLM_API_KEY_HERE');
     } else {
       console.log('[OK] GLM profile exists: ~/.ccs/glm.settings.json (preserved)');
+    }
+
+    // Create kimi.settings.json if missing
+    const kimiSettingsPath = path.join(ccsDir, 'kimi.settings.json');
+    if (!fs.existsSync(kimiSettingsPath)) {
+      const kimiSettings = {
+        env: {
+          ANTHROPIC_BASE_URL: 'https://api.kimi.com/coding/',
+          ANTHROPIC_AUTH_TOKEN: 'YOUR_KIMI_API_KEY_HERE',
+          ANTHROPIC_MODEL: 'kimi-for-coding',
+          ANTHROPIC_DEFAULT_OPUS_MODEL: 'kimi-for-coding',
+          ANTHROPIC_DEFAULT_SONNET_MODEL: 'kimi-for-coding',
+          ANTHROPIC_DEFAULT_HAIKU_MODEL: 'kimi-for-coding'
+        },
+        alwaysThinkingEnabled: true
+      };
+
+      // Atomic write
+      const tmpPath = `${kimiSettingsPath}.tmp`;
+      fs.writeFileSync(tmpPath, JSON.stringify(kimiSettings, null, 2) + '\n', 'utf8');
+      fs.renameSync(tmpPath, kimiSettingsPath);
+
+      console.log('[OK] Created Kimi profile: ~/.ccs/kimi.settings.json');
+      console.log('');
+      console.log('  [!] Configure Kimi API key:');
+      console.log('      1. Get key from: https://www.kimi.com/coding (membership page)');
+      console.log('      2. Edit: ~/.ccs/kimi.settings.json');
+      console.log('      3. Replace: YOUR_KIMI_API_KEY_HERE');
+    } else {
+      console.log('[OK] Kimi profile exists: ~/.ccs/kimi.settings.json (preserved)');
     }
 
     console.log('');

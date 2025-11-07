@@ -10,6 +10,7 @@ INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
 CCS_DIR="$HOME/.ccs"
 CLAUDE_DIR="$HOME/.claude"
 GLM_MODEL="glm-4.6"
+KIMI_MODEL="kimi-for-coding"
 
 # Resolve script directory (handles both file-based and piped execution)
 if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
@@ -31,7 +32,7 @@ fi
 # IMPORTANT: Update this version when releasing new versions!
 # This hardcoded version is used for standalone installations (curl | bash)
 # For git installations, VERSION file is read if available
-CCS_VERSION="2.4.9"
+CCS_VERSION="2.5.0"
 
 # Try to read VERSION file for git installations
 if [[ -f "$SCRIPT_DIR/VERSION" ]]; then
@@ -80,9 +81,11 @@ detect_current_provider() {
     return
   fi
 
-  if grep -q "api.z.ai\|glm-4" "$settings" 2>/dev/null; then
+  if grep -q "api.kimi.com\|kimi-for-coding" "$settings" 2>/dev/null; then
+    echo "kimi"
+  elif grep -q "api.z.ai\|glm-4" "$settings" 2>/dev/null; then
     echo "glm"
-  elif grep -q "ANTHROPIC_BASE_URL" "$settings" 2>/dev/null && ! grep -q "api.z.ai" "$settings" 2>/dev/null; then
+  elif grep -q "ANTHROPIC_BASE_URL" "$settings" 2>/dev/null && ! grep -q "api.z.ai\|api.kimi.com" "$settings" 2>/dev/null; then
     echo "custom"
   else
     echo "claude"
@@ -273,6 +276,22 @@ create_glm_template() {
 EOF
 }
 
+create_kimi_template() {
+  cat << EOF
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "https://api.kimi.com/coding/",
+    "ANTHROPIC_AUTH_TOKEN": "YOUR_KIMI_API_KEY_HERE",
+    "ANTHROPIC_MODEL": "$KIMI_MODEL",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "$KIMI_MODEL",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "$KIMI_MODEL",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "$KIMI_MODEL"
+  },
+  "alwaysThinkingEnabled": true
+}
+EOF
+}
+
 atomic_mv() {
   local src="$1"
   local dest="$2"
@@ -383,6 +402,55 @@ create_glm_profile() {
   fi
 }
 
+create_kimi_profile() {
+  local current_settings="$CLAUDE_DIR/settings.json"
+  local kimi_settings="$CCS_DIR/kimi.settings.json"
+  local provider="$1"
+
+  if [[ "$provider" == "kimi" ]]; then
+    echo "[OK] Copying current Kimi config to profile..."
+    if command -v jq &> /dev/null; then
+      if jq '.env |= (. // {}) + {
+        "ANTHROPIC_DEFAULT_OPUS_MODEL": "'"$KIMI_MODEL"'",
+        "ANTHROPIC_DEFAULT_SONNET_MODEL": "'"$KIMI_MODEL"'",
+        "ANTHROPIC_DEFAULT_HAIKU_MODEL": "'"$KIMI_MODEL"'"
+      }' "$current_settings" > "$kimi_settings.tmp" 2>/dev/null; then
+        atomic_mv "$kimi_settings.tmp" "$kimi_settings"
+        echo "  Created: $kimi_settings (with your existing API key + enhanced settings)"
+      else
+        rm -f "$kimi_settings.tmp"
+        cp "$current_settings" "$kimi_settings"
+        echo "  Created: $kimi_settings (copied as-is, jq enhancement failed)"
+      fi
+    else
+      cp "$current_settings" "$kimi_settings"
+      echo "  Created: $kimi_settings (copied as-is, jq not available)"
+    fi
+  else
+    echo "Creating Kimi profile template at $kimi_settings"
+    if [[ -f "$current_settings" ]] && command -v jq &> /dev/null; then
+      if jq '.env |= (. // {}) + {
+        "ANTHROPIC_BASE_URL": "https://api.kimi.com/coding/",
+        "ANTHROPIC_AUTH_TOKEN": "YOUR_KIMI_API_KEY_HERE",
+        "ANTHROPIC_MODEL": "'"$KIMI_MODEL"'",
+        "ANTHROPIC_DEFAULT_OPUS_MODEL": "'"$KIMI_MODEL"'",
+        "ANTHROPIC_DEFAULT_SONNET_MODEL": "'"$KIMI_MODEL"'",
+        "ANTHROPIC_DEFAULT_HAIKU_MODEL": "'"$KIMI_MODEL"'"
+      } | . + {"alwaysThinkingEnabled": true}' "$current_settings" > "$kimi_settings.tmp" 2>/dev/null; then
+        atomic_mv "$kimi_settings.tmp" "$kimi_settings"
+      else
+        rm -f "$kimi_settings.tmp"
+        echo "  [i]  jq failed, using basic template"
+        create_kimi_template > "$kimi_settings"
+      fi
+    else
+      create_kimi_template > "$kimi_settings"
+    fi
+    echo "  Created: $kimi_settings"
+    echo "  [!]  Edit this file and replace YOUR_KIMI_API_KEY_HERE with your actual Kimi API key"
+  fi
+}
+
 # --- Main Installation ---
 
 echo "┌─ Installing CCS"
@@ -464,10 +532,12 @@ echo ""
 
 CURRENT_PROVIDER=$(detect_current_provider)
 GLM_SETTINGS="$CCS_DIR/glm.settings.json"
+KIMI_SETTINGS="$CCS_DIR/kimi.settings.json"
 
 # Build provider label
 PROVIDER_LABEL=""
 [[ "$CURRENT_PROVIDER" == "glm" ]] && PROVIDER_LABEL=" (detected: GLM)"
+[[ "$CURRENT_PROVIDER" == "kimi" ]] && PROVIDER_LABEL=" (detected: Kimi)"
 [[ "$CURRENT_PROVIDER" == "claude" ]] && PROVIDER_LABEL=" (detected: Claude)"
 [[ "$CURRENT_PROVIDER" == "custom" ]] && PROVIDER_LABEL=" (detected: custom)"
 
@@ -489,12 +559,23 @@ if [[ ! -f "$GLM_SETTINGS" ]]; then
   [[ "$CURRENT_PROVIDER" != "glm" ]] && NEEDS_GLM_KEY=true
 fi
 
+# Track if Kimi needs API key
+NEEDS_KIMI_KEY=false
+
+# Create Kimi profile if missing
+if [[ ! -f "$KIMI_SETTINGS" ]]; then
+  create_kimi_profile "$CURRENT_PROVIDER" >/dev/null 2>&1
+  echo "|  [OK] Kimi profile -> ~/.ccs/kimi.settings.json"
+  [[ "$CURRENT_PROVIDER" != "kimi" ]] && NEEDS_KIMI_KEY=true
+fi
+
 # Create config if missing
 if [[ ! -f "$CCS_DIR/config.json" ]]; then
   cat > "$CCS_DIR/config.json.tmp" << 'EOF'
 {
   "profiles": {
     "glm": "~/.ccs/glm.settings.json",
+    "kimi": "~/.ccs/kimi.settings.json",
     "default": "~/.claude/settings.json"
   }
 }
@@ -544,17 +625,33 @@ if [[ "$NEEDS_GLM_KEY" == "true" ]]; then
     4. Test: ccs glm --version"
 fi
 
+# Show API key warning for Kimi if needed
+if [[ "$NEEDS_KIMI_KEY" == "true" ]]; then
+  msg_critical "Configure Kimi API Key:
+
+    1. Get API key from: https://www.kimi.com/coding
+
+    2. Edit: ~/.ccs/kimi.settings.json
+
+    3. Replace: YOUR_KIMI_API_KEY_HERE
+       With your actual API key
+
+    4. Test: ccs kimi --version"
+fi
+
 msg_success "CCS installed successfully!"
 echo ""
 echo "   Installed components:"
 echo "     * ccs command        -> ~/.local/bin/ccs"
 echo "     * config             -> ~/.ccs/config.json"
 echo "     * glm profile        -> ~/.ccs/glm.settings.json"
+echo "     * kimi profile       -> ~/.ccs/kimi.settings.json"
 echo "     * .claude/ folder    -> ~/.ccs/.claude/"
 echo ""
 echo "   Quick start:"
 echo "     ccs           # Use Claude subscription (default)"
 echo "     ccs glm       # Use GLM fallback"
+echo "     ccs kimi      # Use Kimi for Coding"
 echo ""
 echo ""
 echo "   To uninstall: ccs-uninstall"

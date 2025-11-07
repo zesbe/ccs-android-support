@@ -99,8 +99,11 @@ function handleHelpCommand() {
   console.log(colored('Profile Switching:', 'cyan'));
   console.log(`  ${colored('ccs', 'yellow')}                         Use default profile`);
   console.log(`  ${colored('ccs glm', 'yellow')}                     Switch to GLM profile`);
+  console.log(`  ${colored('ccs kimi', 'yellow')}                    Switch to Kimi profile`);
   console.log(`  ${colored('ccs glm', 'yellow')} "debug this code"   Switch to GLM and run command`);
+  console.log(`  ${colored('ccs kimi', 'yellow')} "write tests"      Switch to Kimi and run command`);
   console.log(`  ${colored('ccs glm', 'yellow')} --verbose           Switch to GLM with Claude flags`);
+  console.log(`  ${colored('ccs kimi', 'yellow')} --verbose           Switch to Kimi with Claude flags`);
   console.log('');
 
   // Flags
@@ -120,6 +123,7 @@ function handleHelpCommand() {
   console.log(colored('Examples:', 'cyan'));
   console.log('  # Try without installing');
   console.log(`  ${colored('npx @kaitranntt/ccs glm', 'yellow')} "write tests"`);
+  console.log(`  ${colored('npx @kaitranntt/ccs kimi', 'yellow')} "write tests"`);
   console.log('');
   console.log('  # Use default Claude subscription');
   console.log(`  ${colored('ccs', 'yellow')} "Review this architecture"`);
@@ -127,8 +131,12 @@ function handleHelpCommand() {
   console.log('  # Switch to GLM for cost-effective tasks');
   console.log(`  ${colored('ccs glm', 'yellow')} "Write unit tests"`);
   console.log('');
-  console.log('  # Use GLM with verbose output');
+  console.log('  # Switch to Kimi for alternative option');
+  console.log(`  ${colored('ccs kimi', 'yellow')} "Write integration tests"`);
+  console.log('');
+  console.log('  # Use with verbose output');
   console.log(`  ${colored('ccs glm', 'yellow')} --verbose "Debug error"`);
+  console.log(`  ${colored('ccs kimi', 'yellow')} --verbose "Review code"`);
   console.log('');
 
   // Uninstall

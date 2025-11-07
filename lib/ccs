@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Version (updated by scripts/bump-version.sh)
-CCS_VERSION="2.4.9"
+CCS_VERSION="2.5.0"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly CONFIG_FILE="${CCS_CONFIG:-$HOME/.ccs/config.json}"
 
@@ -46,8 +46,11 @@ show_help() {
   echo -e "${CYAN}Profile Switching:${RESET}"
   echo -e "  ${YELLOW}ccs${RESET}                         Use default profile"
   echo -e "  ${YELLOW}ccs glm${RESET}                     Switch to GLM profile"
+  echo -e "  ${YELLOW}ccs kimi${RESET}                    Switch to Kimi profile"
   echo -e "  ${YELLOW}ccs glm${RESET} \"debug this code\"   Switch to GLM and run command"
+  echo -e "  ${YELLOW}ccs kimi${RESET} \"write tests\"      Switch to Kimi and run command"
   echo -e "  ${YELLOW}ccs glm${RESET} --verbose           Switch to GLM with Claude flags"
+  echo -e "  ${YELLOW}ccs kimi${RESET} --verbose           Switch to Kimi with Claude flags"
   echo ""
   echo -e "${CYAN}Flags:${RESET}"
   echo -e "  ${YELLOW}-h, --help${RESET}                  Show this help message"
@@ -65,8 +68,12 @@ show_help() {
   echo -e "  # Switch to GLM for cost-effective tasks"
   echo -e "  ${YELLOW}ccs glm${RESET} \"Write unit tests\""
   echo ""
-  echo -e "  # Use GLM with verbose output"
+  echo -e "  # Switch to Kimi for alternative option"
+  echo -e "  ${YELLOW}ccs kimi${RESET} \"Write integration tests\""
+  echo ""
+  echo -e "  # Use with verbose output"
   echo -e "  ${YELLOW}ccs glm${RESET} --verbose \"Debug error\""
+  echo -e "  ${YELLOW}ccs kimi${RESET} --verbose \"Review code\""
   echo ""
     echo -e "${YELLOW}Uninstall:${RESET}"
   echo -e "  macOS/Linux:  curl -fsSL ccs.kaitran.ca/uninstall | bash"
@@ -392,6 +399,7 @@ Solutions:
 {
   \"profiles\": {
     \"glm\": \"~/.ccs/glm.settings.json\",
+    \"kimi\": \"~/.ccs/kimi.settings.json\",
     \"default\": \"~/.claude/settings.json\"
   }
 }

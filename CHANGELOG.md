@@ -4,6 +4,19 @@ All notable changes to CCS will be documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.5.0] - 2025-11-07
+
+### Added
+- Kimi for Coding integration as alternative LLM provider
+- `base-kimi.settings.json` configuration template
+- Kimi profile auto-creation in all install methods (npm, Unix, Windows)
+- Documentation for Kimi API setup and usage
+
+### Changed
+- Default config.json now includes `kimi` profile alongside `glm`
+- Updated installation scripts to create Kimi settings file
+- Enhanced documentation with Kimi examples
+
 ## [2.4.9] - 2025-11-05
 
 ### Fixed

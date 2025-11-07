@@ -6,7 +6,7 @@
 
 **One command, zero downtime, right model for each task**
 
-Switch between Claude Sonnet 4.5 and GLM 4.6 instantly. Stop hitting rate limits. Start optimizing costs.
+Switch between Claude Sonnet 4.5, GLM 4.6, and Kimi for Coding instantly. Stop hitting rate limits. Start optimizing costs.
 
 
 [![License](https://img.shields.io/badge/license-MIT-C15F3C?style=for-the-badge)](LICENSE)
@@ -61,6 +61,9 @@ ccs "Review this architecture design"
 # Switch to GLM for cost-optimized tasks
 ccs glm "Create a simple REST API"
 
+# Switch to Kimi for alternative option
+ccs kimi "Write integration tests"
+
 # Use GLM for all subsequent commands until switched back
 ccs glm
 ccs "Debug this issue"
@@ -94,6 +97,7 @@ bun add -g @kaitranntt/ccs
 {
   "profiles": {
     "glm": "~/.ccs/glm.settings.json",
+    "kimi": "~/.ccs/kimi.settings.json",
     "default": "~/.claude/settings.json"
   }
 }
@@ -114,10 +118,11 @@ $env:CCS_CLAUDE_PATH = "D:\Tools\Claude\claude.exe"   # Windows
 
 ## The Daily Developer Pain Point
 
-You have both Claude subscription and GLM Coding Plan. Two scenarios happen every day:
+You have Claude subscription, GLM Coding Plan, and Kimi for Coding. Three scenarios happen every day:
 
 1. **Rate Limits Hit**: Claude stops mid-project → you manually edit `~/.claude/settings.json`
-2. **Cost Waste**: Simple tasks use expensive Claude → GLM would work fine
+2. **Cost Waste**: Simple tasks use expensive Claude → GLM or Kimi would work fine
+3. **Model Choice**: Different tasks benefit from different model strengths → manual switching
 
 Manual switching breaks your flow. **CCS fixes it instantly**.
 
@@ -140,8 +145,11 @@ Manual switching breaks your flow. **CCS fixes it instantly**.
 ```bash
 ccs           # Use Claude subscription (default)
 ccs glm       # Switch to GLM fallback
+ccs kimi      # Switch to Kimi for Coding
 # Hit rate limit? Switch instantly:
 ccs glm       # Continue working with GLM
+# Or switch to Kimi:
+ccs kimi      # Continue working with Kimi
 ```
 
 One command. Zero downtime. No file editing. Right model, right task.
@@ -199,6 +207,7 @@ graph LR
 ```bash
 ccs              # Use Claude subscription (default)
 ccs glm          # Use GLM fallback
+ccs kimi         # Use Kimi for Coding
 ccs --version    # Show CCS version and install location
 ```
 

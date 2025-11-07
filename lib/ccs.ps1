@@ -98,8 +98,11 @@ function Show-Help {
     Write-ColorLine "Profile Switching:" "Cyan"
     Write-ColorLine "  ccs                         Use default profile" "Yellow"
     Write-ColorLine "  ccs glm                     Switch to GLM profile" "Yellow"
+    Write-ColorLine "  ccs kimi                    Switch to Kimi profile" "Yellow"
     Write-ColorLine "  ccs glm 'debug this code'   Switch to GLM and run command" "Yellow"
+    Write-ColorLine "  ccs kimi 'write tests'      Switch to Kimi and run command" "Yellow"
     Write-ColorLine "  ccs glm --verbose           Switch to GLM with Claude flags" "Yellow"
+    Write-ColorLine "  ccs kimi --verbose           Switch to Kimi with Claude flags" "Yellow"
     Write-Host ""
     Write-ColorLine "Flags:" "Cyan"
     Write-ColorLine "  -h, --help                  Show this help message" "Yellow"
@@ -117,8 +120,12 @@ function Show-Help {
     Write-Host "  # Switch to GLM for cost-effective tasks"
     Write-ColorLine "  ccs glm 'Write unit tests'" "Yellow"
     Write-Host ""
-    Write-Host "  # Use GLM with verbose output"
+    Write-Host "  # Switch to Kimi for alternative option"
+    Write-ColorLine "  ccs kimi 'Write integration tests'" "Yellow"
+    Write-Host ""
+    Write-Host "  # Use with verbose output"
     Write-ColorLine "  ccs glm --verbose 'Debug error'" "Yellow"
+    Write-ColorLine "  ccs kimi --verbose 'Review code'" "Yellow"
     Write-Host ""
         Write-ColorLine "Uninstall:" "Cyan"
     Write-Host "  macOS/Linux:  curl -fsSL ccs.kaitran.ca/uninstall | bash"
@@ -134,7 +141,7 @@ function Show-Help {
 }
 
 # Version (updated by scripts/bump-version.sh)
-$CcsVersion = "2.4.9"
+$CcsVersion = "2.5.0"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ConfigFile = if ($env:CCS_CONFIG) { $env:CCS_CONFIG } else { "$env:USERPROFILE\.ccs\config.json" }
 
@@ -268,7 +275,7 @@ if (-not (Test-Path $ConfigFile)) {
     "     irm ccs.kaitran.ca/install | iex" + "`n`n" +
     "  2. Or create config manually:" + "`n" +
     "     New-Item -ItemType Directory -Force -Path '$env:USERPROFILE\.ccs'" + "`n" +
-    "     Set-Content -Path '$env:USERPROFILE\.ccs\config.json' -Value '{`"profiles`":{`"glm`":`"~/.ccs/glm.settings.json`",`"default`":`"~/.claude/settings.json`"}}'"
+    "     Set-Content -Path '$env:USERPROFILE\.ccs\config.json' -Value '{`"profiles`":{`"glm`":`"~/.ccs/glm.settings.json`",`"kimi`":`"~/.ccs/kimi.settings.json`",`"default`":`"~/.claude/settings.json`"}}'"
 
     Write-ErrorMsg $ErrorMessage
     exit 1
