@@ -4,6 +4,37 @@ All notable changes to CCS will be documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.1.1] - 2025-11-10
+
+### Fixed
+- **Migration Timing**: Migration now runs during installation, not on first `ccs` execution
+  - npm: Migration runs in `scripts/postinstall.js` during `npm install`
+  - bash: Migration runs in `installers/install.sh` during installation
+  - PowerShell: Migration runs in `installers/install.ps1` during installation
+  - Guarantees `~/.ccs/shared/` populated with `~/.claude/` content immediately
+  - Users no longer need to run `ccs` command to trigger migration
+
+### Changed
+- **SharedManager Refactoring**: Improved migration logic and file preservation
+  - Extracted `_needsMigration()` method for clearer logic
+  - Extracted `_performMigration()` method with file counting stats
+  - `_copyDirectory()` now returns `{copied, skipped}` stats
+  - Preserves existing files in `~/.ccs/shared/` (never overwrites user modifications)
+  - Shows detailed migration output: `[OK] Migrated 5 commands, 19 skills`
+- **Removed Lazy Migration**: No longer runs migration on first `ccs` execution
+  - Removed from `bin/ccs.js` (Node.js wrapper)
+  - Removed from `lib/ccs` (bash executable)
+  - Removed from `lib/ccs.ps1` (PowerShell executable)
+
+### Technical Details
+- **Modified Files**: All implementations updated for consistency
+  - `bin/shared-manager.js`: Refactored with `_needsMigration()`, `_performMigration()`, improved `_copyDirectory()`
+  - `scripts/postinstall.js`: Calls migration after creating shared directories
+  - `installers/install.sh`: Added `migrate_shared_data()` function
+  - `installers/install.ps1`: Added `Invoke-SharedDataMigration` function
+  - `bin/ccs.js`, `lib/ccs`, `lib/ccs.ps1`: Removed lazy migration calls
+- **Cross-Platform Parity**: All installation methods (npm, bash, PowerShell) behave identically
+
 ## [3.1.0] - 2025-11-10
 
 ### Added

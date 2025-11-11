@@ -262,11 +262,6 @@ async function main() {
     recovery.showRecoveryHints();
   }
 
-  // Run migration to shared structure (Phase 1: idempotent)
-  const SharedManager = require('./shared-manager');
-  const sharedManager = new SharedManager();
-  sharedManager.migrateToSharedStructure();
-
   // Detect profile
   const { profile, remainingArgs } = detectProfile(args);
 

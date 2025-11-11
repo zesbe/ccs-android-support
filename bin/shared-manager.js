@@ -69,51 +69,99 @@ class SharedManager {
   }
 
   /**
+   * Check if migration is needed
+   * @returns {boolean}
+   * @private
+   */
+  _needsMigration() {
+    // If shared dir doesn't exist, migration needed
+    if (!fs.existsSync(this.sharedDir)) {
+      return true;
+    }
+
+    // Check if ALL shared directories are empty
+    const allEmpty = this.sharedDirs.every(dir => {
+      const dirPath = path.join(this.sharedDir, dir);
+      if (!fs.existsSync(dirPath)) return true;
+      try {
+        const files = fs.readdirSync(dirPath);
+        return files.length === 0;
+      } catch (err) {
+        return true; // If can't read, assume empty
+      }
+    });
+
+    return allEmpty;
+  }
+
+  /**
+   * Perform migration from ~/.claude/ to ~/.ccs/shared/
+   * @returns {object} { commands: N, skills: N, agents: N }
+   * @private
+   */
+  _performMigration() {
+    const stats = { commands: 0, skills: 0, agents: 0 };
+    const claudeDir = path.join(this.homeDir, '.claude');
+
+    if (!fs.existsSync(claudeDir)) {
+      return stats; // No content to migrate
+    }
+
+    // Migrate commands
+    const commandsPath = path.join(claudeDir, 'commands');
+    if (fs.existsSync(commandsPath)) {
+      const result = this._copyDirectory(commandsPath, path.join(this.sharedDir, 'commands'));
+      stats.commands = result.copied;
+    }
+
+    // Migrate skills
+    const skillsPath = path.join(claudeDir, 'skills');
+    if (fs.existsSync(skillsPath)) {
+      const result = this._copyDirectory(skillsPath, path.join(this.sharedDir, 'skills'));
+      stats.skills = result.copied;
+    }
+
+    // Migrate agents
+    const agentsPath = path.join(claudeDir, 'agents');
+    if (fs.existsSync(agentsPath)) {
+      const result = this._copyDirectory(agentsPath, path.join(this.sharedDir, 'agents'));
+      stats.agents = result.copied;
+    }
+
+    return stats;
+  }
+
+  /**
    * Migrate existing instances to shared structure
    * Idempotent: Safe to run multiple times
    */
   migrateToSharedStructure() {
-    // Check if migration is needed (shared dirs exist but are empty)
-    const needsMigration = !fs.existsSync(this.sharedDir) ||
-      this.sharedDirs.every(dir => {
-        const dirPath = path.join(this.sharedDir, dir);
-        if (!fs.existsSync(dirPath)) return true;
-        try {
-          const files = fs.readdirSync(dirPath);
-          return files.length === 0; // Empty directory needs migration
-        } catch (err) {
-          return true; // If we can't read it, assume it needs migration
-        }
-      });
+    console.log('[i] Checking for content migration...');
 
-    if (!needsMigration) {
-      return; // Already migrated with content
+    // Check if migration is needed
+    if (!this._needsMigration()) {
+      console.log('[OK] Migration not needed (shared dirs have content)');
+      return;
     }
+
+    console.log('[i] Migrating ~/.claude/ content to ~/.ccs/shared/...');
 
     // Create shared directories
     this.ensureSharedDirectories();
 
-    // Copy from ~/.claude/ (actual Claude CLI directory)
-    const claudeDir = path.join(this.homeDir, '.claude');
+    // Perform migration
+    const stats = this._performMigration();
 
-    if (fs.existsSync(claudeDir)) {
-      // Copy commands to shared (if exists)
-      const commandsPath = path.join(claudeDir, 'commands');
-      if (fs.existsSync(commandsPath)) {
-        this._copyDirectory(commandsPath, path.join(this.sharedDir, 'commands'));
-      }
-
-      // Copy skills to shared (if exists)
-      const skillsPath = path.join(claudeDir, 'skills');
-      if (fs.existsSync(skillsPath)) {
-        this._copyDirectory(skillsPath, path.join(this.sharedDir, 'skills'));
-      }
-
-      // Copy agents to shared (if exists)
-      const agentsPath = path.join(claudeDir, 'agents');
-      if (fs.existsSync(agentsPath)) {
-        this._copyDirectory(agentsPath, path.join(this.sharedDir, 'agents'));
-      }
+    // Show results
+    const total = stats.commands + stats.skills + stats.agents;
+    if (total === 0) {
+      console.log('[OK] No content to migrate (empty ~/.claude/)');
+    } else {
+      const parts = [];
+      if (stats.commands > 0) parts.push(`${stats.commands} commands`);
+      if (stats.skills > 0) parts.push(`${stats.skills} skills`);
+      if (stats.agents > 0) parts.push(`${stats.agents} agents`);
+      console.log(`[OK] Migrated ${parts.join(', ')}`);
     }
 
     // Update all instances to use symlinks
@@ -127,19 +175,18 @@ class SharedManager {
         }
       }
     }
-
-    console.log('[OK] Migrated to shared structure');
   }
 
   /**
-   * Copy directory recursively (fallback for Windows)
+   * Copy directory recursively (SAFE: preserves existing files)
    * @param {string} src - Source directory
    * @param {string} dest - Destination directory
+   * @returns {object} { copied: N, skipped: N }
    * @private
    */
   _copyDirectory(src, dest) {
     if (!fs.existsSync(src)) {
-      return;
+      return { copied: 0, skipped: 0 };
     }
 
     if (!fs.existsSync(dest)) {
@@ -147,17 +194,30 @@ class SharedManager {
     }
 
     const entries = fs.readdirSync(src, { withFileTypes: true });
+    let copied = 0;
+    let skipped = 0;
 
     for (const entry of entries) {
       const srcPath = path.join(src, entry.name);
       const destPath = path.join(dest, entry.name);
 
+      // SAFETY: Skip if destination exists (preserve user modifications)
+      if (fs.existsSync(destPath)) {
+        skipped++;
+        continue;
+      }
+
       if (entry.isDirectory()) {
-        this._copyDirectory(srcPath, destPath);
+        const stats = this._copyDirectory(srcPath, destPath);
+        copied += stats.copied;
+        skipped += stats.skipped;
       } else {
         fs.copyFileSync(srcPath, destPath);
+        copied++;
       }
     }
+
+    return { copied, skipped };
   }
 }
 

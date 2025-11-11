@@ -31,7 +31,7 @@ $InstallMethod = if ($ScriptDir -and ((Test-Path "$ScriptDir\lib\ccs.ps1") -or (
 # IMPORTANT: Update this version when releasing new versions!
 # This hardcoded version is used for standalone installations (irm | iex)
 # For git installations, VERSION file is read if available
-$CcsVersion = "3.1.0"
+$CcsVersion = "3.1.1"
 
 # Try to read VERSION file for git installations
 if ($ScriptDir) {
@@ -415,6 +415,93 @@ if (Test-Path $GlmSettings) {
 }
 
 Write-Host "========================================="
+Write-Host ""
+
+# Migrate from ~/.claude/ to ~/.ccs/shared/ (v3.1.1)
+function Invoke-SharedDataMigration {
+    $SharedDir = "$CcsDir\shared"
+    $ClaudeDir = "$env:USERPROFILE\.claude"
+
+    # Create shared directories
+    @('commands', 'skills', 'agents') | ForEach-Object {
+        $Dir = Join-Path $SharedDir $_
+        if (-not (Test-Path $Dir)) {
+            New-Item -ItemType Directory -Path $Dir -Force | Out-Null
+        }
+    }
+
+    # Check if migration is needed (shared dirs are empty)
+    $NeedsMigration = $false
+    foreach ($Dir in @('commands', 'skills', 'agents')) {
+        $DirPath = Join-Path $SharedDir $Dir
+        if (-not (Test-Path $DirPath) -or (Get-ChildItem $DirPath -ErrorAction SilentlyContinue).Count -eq 0) {
+            $NeedsMigration = $true
+            break
+        }
+    }
+
+    if (-not $NeedsMigration) {
+        return
+    }
+
+    # Copy from ~/.claude/ if exists
+    if (-not (Test-Path $ClaudeDir)) {
+        return
+    }
+
+    $MigratedCommands = 0
+    $MigratedSkills = 0
+    $MigratedAgents = 0
+
+    # Copy commands
+    $CommandsPath = Join-Path $ClaudeDir "commands"
+    if (Test-Path $CommandsPath) {
+        Get-ChildItem $CommandsPath -File -ErrorAction SilentlyContinue | ForEach-Object {
+            $DestPath = Join-Path "$SharedDir\commands" $_.Name
+            if (-not (Test-Path $DestPath)) {
+                Copy-Item $_.FullName $DestPath -ErrorAction SilentlyContinue
+                $MigratedCommands++
+            }
+        }
+    }
+
+    # Copy skills (directories)
+    $SkillsPath = Join-Path $ClaudeDir "skills"
+    if (Test-Path $SkillsPath) {
+        Get-ChildItem $SkillsPath -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+            $DestPath = Join-Path "$SharedDir\skills" $_.Name
+            if (-not (Test-Path $DestPath)) {
+                Copy-Item $_.FullName $DestPath -Recurse -ErrorAction SilentlyContinue
+                $MigratedSkills++
+            }
+        }
+    }
+
+    # Copy agents
+    $AgentsPath = Join-Path $ClaudeDir "agents"
+    if (Test-Path $AgentsPath) {
+        Get-ChildItem $AgentsPath -File -ErrorAction SilentlyContinue | ForEach-Object {
+            $DestPath = Join-Path "$SharedDir\agents" $_.Name
+            if (-not (Test-Path $DestPath)) {
+                Copy-Item $_.FullName $DestPath -ErrorAction SilentlyContinue
+                $MigratedAgents++
+            }
+        }
+    }
+
+    # Show results
+    $Total = $MigratedCommands + $MigratedSkills + $MigratedAgents
+    if ($Total -gt 0) {
+        $Parts = @()
+        if ($MigratedCommands -gt 0) { $Parts += "$MigratedCommands commands" }
+        if ($MigratedSkills -gt 0) { $Parts += "$MigratedSkills skills" }
+        if ($MigratedAgents -gt 0) { $Parts += "$MigratedAgents agents" }
+        Write-Host "[i] Migrated $($Parts -join ', ')"
+    }
+}
+
+Write-Host "[i] Checking for content migration..."
+Invoke-SharedDataMigration
 Write-Host ""
 
 # Check and update PATH

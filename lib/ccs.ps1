@@ -12,7 +12,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 # Version (updated by scripts/bump-version.sh)
-$CcsVersion = "3.1.0"
+$CcsVersion = "3.1.1"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ConfigFile = if ($env:CCS_CONFIG) { $env:CCS_CONFIG } else { "$env:USERPROFILE\.ccs\config.json" }
 $ProfilesJson = "$env:USERPROFILE\.ccs\profiles.json"
@@ -999,9 +999,6 @@ if (-not (Invoke-AutoRecovery)) {
     Write-ErrorMsg "Auto-recovery failed. Check permissions."
     exit 1
 }
-
-# Run migration to shared structure (Phase 1: idempotent)
-Migrate-SharedStructure
 
 # Smart profile detection: if first arg starts with '-', it's a flag not a profile
 if ($RemainingArgs.Count -eq 0 -or $RemainingArgs[0] -match '^-') {

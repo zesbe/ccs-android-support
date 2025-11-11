@@ -32,7 +32,7 @@ fi
 # IMPORTANT: Update this version when releasing new versions!
 # This hardcoded version is used for standalone installations (curl | bash)
 # For git installations, VERSION file is read if available
-CCS_VERSION="3.1.0"
+CCS_VERSION="3.1.1"
 
 # Try to read VERSION file for git installations
 if [[ -f "$SCRIPT_DIR/VERSION" ]]; then
@@ -609,6 +609,81 @@ if [[ -f "$GLM_SETTINGS" ]]; then
 fi
 
 echo "└─"
+echo ""
+
+# Migrate from ~/.claude/ to ~/.ccs/shared/ (v3.1.1)
+migrate_shared_data() {
+  local shared_dir="$CCS_DIR/shared"
+  local claude_dir="$HOME/.claude"
+
+  # Create shared directories
+  mkdir -p "$shared_dir"/{commands,skills,agents}
+
+  # Check if migration is needed (shared dirs are empty)
+  local needs_migration=false
+  for dir in commands skills agents; do
+    if [[ -z "$(ls -A "$shared_dir/$dir" 2>/dev/null)" ]]; then
+      needs_migration=true
+      break
+    fi
+  done
+
+  if [[ "$needs_migration" == "false" ]]; then
+    return 0
+  fi
+
+  # Copy from ~/.claude/ if exists
+  if [[ ! -d "$claude_dir" ]]; then
+    return 0
+  fi
+
+  local migrated_commands=0
+  local migrated_skills=0
+  local migrated_agents=0
+
+  # Copy commands
+  if [[ -d "$claude_dir/commands" ]]; then
+    for file in "$claude_dir/commands"/*; do
+      [[ -f "$file" ]] || continue
+      local basename=$(basename "$file")
+      [[ -f "$shared_dir/commands/$basename" ]] && continue  # Skip if exists
+      cp "$file" "$shared_dir/commands/" 2>/dev/null && migrated_commands=$((migrated_commands + 1))
+    done
+  fi
+
+  # Copy skills (directories)
+  if [[ -d "$claude_dir/skills" ]]; then
+    for dir in "$claude_dir/skills"/*; do
+      [[ -d "$dir" ]] || continue
+      local basename=$(basename "$dir")
+      [[ -d "$shared_dir/skills/$basename" ]] && continue  # Skip if exists
+      cp -r "$dir" "$shared_dir/skills/" 2>/dev/null && migrated_skills=$((migrated_skills + 1))
+    done
+  fi
+
+  # Copy agents
+  if [[ -d "$claude_dir/agents" ]]; then
+    for file in "$claude_dir/agents"/*; do
+      [[ -f "$file" ]] || continue
+      local basename=$(basename "$file")
+      [[ -f "$shared_dir/agents/$basename" ]] && continue  # Skip if exists
+      cp "$file" "$shared_dir/agents/" 2>/dev/null && migrated_agents=$((migrated_agents + 1))
+    done
+  fi
+
+  # Show results
+  local total=$((migrated_commands + migrated_skills + migrated_agents))
+  if [[ $total -gt 0 ]]; then
+    local parts=()
+    [[ $migrated_commands -gt 0 ]] && parts+=("$migrated_commands commands")
+    [[ $migrated_skills -gt 0 ]] && parts+=("$migrated_skills skills")
+    [[ $migrated_agents -gt 0 ]] && parts+=("$migrated_agents agents")
+    echo "[i] Migrated $(IFS=", "; echo "${parts[*]}")"
+  fi
+}
+
+echo "[i] Checking for content migration..."
+migrate_shared_data
 echo ""
 
 # Auto-configure PATH if needed (all Unix platforms)

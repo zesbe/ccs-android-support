@@ -89,6 +89,18 @@ function createConfigFiles() {
       }
     }
 
+    // Migrate from ~/.claude/ to ~/.ccs/shared/ (v3.1.1)
+    console.log('');
+    try {
+      const SharedManager = require('../bin/shared-manager');
+      const sharedManager = new SharedManager();
+      sharedManager.migrateToSharedStructure();
+    } catch (err) {
+      console.warn('[!] Migration warning:', err.message);
+      console.warn('    You can manually copy files from ~/.claude/ to ~/.ccs/shared/');
+    }
+    console.log('');
+
     // Create config.json if missing
     const configPath = path.join(ccsDir, 'config.json');
     if (!fs.existsSync(configPath)) {
