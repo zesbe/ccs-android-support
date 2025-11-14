@@ -1,45 +1,39 @@
-# CCS - Claude Code Switch
-
 <div align="center">
+
+# CCS - Claude Code Switch
 
 ![CCS Logo](docs/assets/ccs-logo-medium.png)
 
-**Một lệnh, không downtime, nhiều tài khoản**
+### Một lệnh, không downtime, nhiều tài khoản
 
-Chuyển đổi giữa nhiều tài khoản Claude, GLM, và Kimi ngay lập tức.<br>
+**Chuyển đổi giữa nhiều tài khoản Claude, GLM, và Kimi ngay lập tức.**
 Ngừng hitting rate limits. Làm việc liên tục.
 
+<br>
 
 [![License](https://img.shields.io/badge/license-MIT-C15F3C?style=for-the-badge)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey?style=for-the-badge)]()
 [![npm](https://img.shields.io/npm/v/@kaitranntt/ccs?style=for-the-badge&logo=npm)](https://www.npmjs.com/package/@kaitranntt/ccs)
 [![PoweredBy](https://img.shields.io/badge/PoweredBy-ClaudeKit-C15F3C?style=for-the-badge)](https://claudekit.cc?ref=HMNKXOHN)
 
-**Ngôn ngữ**: [English](README.md) | [Tiếng Việt](README.vi.md) | [日本語](README.ja.md)
+**Languages**: [English](README.md) · [Tiếng Việt](README.vi.md) · [日本語](README.ja.md)
 
 </div>
 
----
+<br>
 
-## 🚀 Bắt Đầu Nhanh
+## Bắt Đầu Nhanh
 
-### 🔑 Điều Kiện Tiên Quyết
+### Cài Đặt
 
-**Trước khi cài đặt CCS, hãy đảm bảo bạn đã đăng nhập vào Claude CLI với tài khoản subscription:**
-```bash
-claude /login
-```
-
-### Phương Pháp Cài Đặt Chính
-
-#### Option 1: npm Package (Được khuyến nghị)
+**npm Package (Được khuyến nghị)**
 
 **macOS / Linux / Windows**
 ```bash
 npm install -g @kaitranntt/ccs
 ```
 
-Tất cả các trình quản lý package chính đều được hỗ trợ:
+**Tất cả các trình quản lý package chính đều được hỗ trợ:**
 
 ```bash
 # yarn
@@ -52,7 +46,10 @@ pnpm add -g @kaitranntt/ccs
 bun add -g @kaitranntt/ccs
 ```
 
-#### Option 2: Cài Đặt Trực Tiếp (Truyền thống)
+<details>
+<summary><strong>Phương án thay thế: Cài Đặt Trực Tiếp (Truyền thống)</strong></summary>
+
+<br>
 
 **macOS / Linux**
 ```bash
@@ -64,7 +61,11 @@ curl -fsSL ccs.kaitran.ca/install | bash
 irm ccs.kaitran.ca/install | iex
 ```
 
-> **💡 Mẹo hiệu năng**: Cài truyền thống bỏ qua Node.js routing để khởi động nhanh hơn, nhưng tôi ưu tiên cập nhật npm do triển khai dễ dàng hơn.
+**Lưu ý**: Cài truyền thống bỏ qua Node.js routing để khởi động nhanh hơn, nhưng ưu tiên npm cho dễ dàng tự động hóa triển khai.
+
+</details>
+
+<br>
 
 ### Cấu Hình (Tự Tạo)
 
@@ -82,18 +83,29 @@ irm ccs.kaitran.ca/install | iex
 }
 ```
 
-### Đường Dẫn Claude CLI Tùy Chỉnh
+<details>
+<summary><h3>Custom Claude CLI Path</h3></summary>
+
+<br>
 
 Nếu Claude CLI được cài đặt ở vị trí không chuẩn (ổ D, thư mục tùy chỉnh), đặt `CCS_CLAUDE_PATH`:
 
 ```bash
-export CCS_CLAUDE_PATH="/path/to/claude"              # Unix
-$env:CCS_CLAUDE_PATH = "D:\Tools\Claude\claude.exe"   # Windows
+# Unix/Linux/macOS
+export CCS_CLAUDE_PATH="/path/to/claude"
+
+# Windows PowerShell
+$env:CCS_CLAUDE_PATH = "D:\Tools\Claude\claude.exe"
 ```
 
-**Xem [Hướng dẫn Khắc phục Sự cố](./docs/vi/troubleshooting.vi.md#claude-cli-ở-vị-trí-không-chuẩn) để biết chi tiết cài đặt.**
+**Xem thêm**: [Hướng dẫn Khắc phục Sự cố](./docs/en/troubleshooting.md#claude-cli-in-non-standard-location) để biết chi tiết cài đặt.
 
-### Hỗ Trợ Symlink Windows (Chế Độ Nhà Phát Triển)
+</details>
+
+<details>
+<summary><h3>Windows Symlink Support (Developer Mode)</h3></summary>
+
+<br>
 
 **Người dùng Windows**: Bật Chế độ Nhà phát triển để có symlink thực sự (hiệu suất tốt hơn, đồng bộ hóa tức thì):
 
@@ -101,137 +113,83 @@ $env:CCS_CLAUDE_PATH = "D:\Tools\Claude\claude.exe"   # Windows
 2. Bật **Developer Mode**
 3. Cài đặt lại CCS: `npm install -g @kaitranntt/ccs`
 
-**Nếu không có Chế độ Nhà phát triển**: CCS tự động chuyển sang sao chép thư mục (hoạt động nhưng không đồng bộ tức thì trên các profile).
+**Cảnh báo**: Nếu không có Chế độ Nhà phát triển, CCS tự động chuyển sang sao chép thư mục (hoạt động nhưng không đồng bộ tức thì trên các profile).
 
----
+</details>
+
+<br>
 
 ### Lần Chuyển Đổi Đầu Tiên
 
-> **⚠️ Quan trọng**: Trước khi dùng GLM, GLMT hay Kimi profile, cập nhật API key trong file settings:
-> - **GLM**: Chỉnh sửa `~/.ccs/glm.settings.json` và thêm GLM API key
-> - **GLMT**: Chỉnh sửa `~/.ccs/glmt.settings.json` và thêm Z.AI API key (yêu cầu coding plan)
-> - **Kimi**: Chỉnh sửa `~/.ccs/kimi.settings.json` và thêm Kimi API key
+> [!IMPORTANT]
+> **Trước khi dùng các mô hình thay thế, cập nhật API keys trong file settings:**
+>
+> - **GLM**: Chỉnh sửa `~/.ccs/glm.settings.json` và thêm Z.AI Coding Plan API Key của bạn
+> - **GLMT**: Chỉnh sửa `~/.ccs/glmt.settings.json` và thêm Z.AI Coding Plan API Key của bạn
+> - **Kimi**: Chỉnh sửa `~/.ccs/kimi.settings.json` và thêm Kimi API key của bạn
+
+<br>
+
+**Parallel Workflow: Planning + Execution**
 
 ```bash
-# Claude subscription mặc định
-ccs "Lên kế hoạch kiến trúc microservices"
+# Terminal 1 - Planning (Claude Sonnet)
+ccs "Plan a REST API with authentication and rate limiting"
 
-# Chuyển sang GLM (tối ưu chi phí)
-ccs glm "Tạo REST API"
-
-# GLM với thinking mode
-ccs glmt "Giải quyết bài toán thuật toán"
-
-# Kimi cho lập trình
-ccs kimi "Viết integration tests"
+# Terminal 2 - Execution (GLM, cost-optimized)
+ccs glm "Implement the user authentication endpoints from the plan"
 ```
 
----
+<details>
+<summary><strong>Thinking Models (Kimi & GLMT)</strong></summary>
 
-## Điểm Đau Hàng Ngày Của Lập Trình Viên
+<br>
 
-Lập trình viên đối mặt nhiều kịch bản subscription hàng ngày:
+```bash
+# Kimi - Stable thinking support
+ccs kimi "Design a caching strategy with trade-off analysis"
 
-1. **Phân Tách Account**: Tài khoản Claude công ty vs Claude cá nhân → bạn phải tự chuyển context để giữ công việc và cá nhân riêng biệt
-2. **Hết Rate Limit**: Claude dừng giữa chừng project → bạn phải tự tay sửa `~/.claude/settings.json`
-3. **Quản Lý Chi Phí**: 2-3 subscriptions Pro ($20/tháng) vs Claude Max với chi phí 5x ($100/tháng) → Tier Pro là ngưỡng thực tế cho hầu hết lập trình viên
-4. **Lựa Chọn Model**: Tác vụ khác nhau hưởng lợi từ thế mạnh model khác nhau → chuyển đổi thủ công
+# GLMT - Experimental (see full disclaimer below)
+ccs glmt "Debug complex algorithm with reasoning steps"
+```
 
-Chuyển đổi context thủ công làm gián đoạn workflow. **CCS quản lý liền mạch**.
+**Lưu ý:** GLMT là thử nghiệm và không ổn định. Xem phần [GLM with Thinking (GLMT)](#glm-with-thinking-glmt) dưới đây để biết chi tiết.
 
-## Tại Sao CCS Thay Vì Chuyển Đổi Thủ Công?
+</details>
+
+<br>
+
+## The Daily Developer Pain Point
+
+**Session limits shouldn't kill your flow state.**
+
+Developers face multiple subscription scenarios daily:
+
+1. **Account Separation** - Company Claude account vs personal Claude → you must manually switch contexts to keep work and personal separate
+2. **Rate Limits Hit** - Claude stops mid-project → you manually edit `~/.claude/settings.json`
+3. **Cost Management** - 2-3 Pro subscriptions ($20/month each) vs Claude Max at 5x cost ($100/month) → Pro tier is the practical ceiling for most developers
+4. **Model Choice** - Different tasks benefit from different model strengths → manual switching
+
+**Manual context switching breaks your workflow. CCS manages it seamlessly.**
+
+<br>
+
+## Why CCS Instead of Manual Switching?
 
 <div align="center">
 
-| Tính năng | Lợi ích |
-|-----------|---------|
-| **Phân Cách Account** | Giữ công việc riêng với cá nhân |
-| **Tối Ưu Chi Phí** | 2-3 account Pro vs Max 5x chi phí |
-| **Chuyển Đổi Tức Thì** | Một lệnh, không sửa file |
-| **Không Downtime** | Không gián đoạn workflow |
-| **Quản Lý Rate Limit** | Chuyển account khi hết limit |
-| **Đa Nền Tảng** | macOS, Linux, Windows |
+| Feature | Benefit |
+|:--------|:--------|
+| **Account Isolation** | Keep work separate from personal |
+| **Cost Optimization** | 2-3 Pro accounts vs Max at 5x cost |
+| **Instant Switching** | One command, no file editing |
+| **Zero Downtime** | Never interrupt workflow |
+| **Rate Limit Management** | Switch accounts when limits hit |
+| **Cross-Platform** | macOS, Linux, Windows |
 
 </div>
 
-**Giải pháp**:
-```bash
-ccs cong-ty      # Dùng account Claude công ty
-ccs ca-nhan      # Chuyển sang account Claude cá nhân
-ccs glm          # Chuyển sang GLM cho tác vụ tối ưu chi phí
-ccs kimi         # Chuyển sang Kimi cho lựa chọn thay thế
-# Hết rate limit? Chuyển ngay:
-ccs glm          # Tiếp tục làm việc với GLM
-# Cần account công ty khác?
-ccs cong-ty-2    # Chuyển sang account công ty thứ hai
-```
-
----
-
-## 🏗️ Tổng Quan Kiến Trúc
-
-**v3.0 Mô hình Login-Per-Profile**: Mỗi profile là một Claude instance riêng biệt nơi người dùng đăng nhập trực tiếp. Không cần sao chép credentials hay vault encryption.
-
-```mermaid
-flowchart TD
-    subgraph "Người Dùng Input"
-        USER["User chạy: ccs &lt;profile&gt; [args...]"]
-    end
-
-    subgraph "Engine Phát Hiện Profile"
-        DETECT[ProfileDetector]
-        PROFILE_CHECK{Profile tồn tại?}
-
-        subgraph "Loại Profile"
-            SETTINGS["Settings-based<br/>glm, kimi, default"]
-            ACCOUNT["Account-based<br/>work, personal, team"]
-        end
-    end
-
-    subgraph "Xử Lý Core CCS"
-        CONFIG["Đọc config.json<br/>và profiles.json"]
-
-        subgraph "Profile Handlers"
-            SETTINGS_MGR["SettingsManager<br/>→ --settings flag"]
-            INSTANCE_MGR["InstanceManager<br/>→ CLAUDE_CONFIG_DIR"]
-        end
-    end
-
-    subgraph "Thực Thi Claude CLI"
-        CLAUDE_DETECT["Claude CLI Detection<br/>Hỗ trợ CCS_CLAUDE_PATH"]
-
-        subgraph "Phương Thức Thực Thi"
-            SETTINGS_EXEC["claude --settings &lt;path&gt;"]
-            INSTANCE_EXEC["CLAUDE_CONFIG_DIR=&lt;instance&gt; claude"]
-        end
-    end
-
-    subgraph "API Layer"
-        API["API Response<br/>Claude Sonnet 4.5<br/>GLM 4.6<br/>Kimi K2 Thinking"]
-    end
-
-    %% Flow connections
-    USER --> DETECT
-    DETECT --> PROFILE_CHECK
-    PROFILE_CHECK -->|Có| SETTINGS
-    PROFILE_CHECK -->|Có| ACCOUNT
-
-    SETTINGS --> CONFIG
-    ACCOUNT --> CONFIG
-
-    CONFIG --> SETTINGS_MGR
-    CONFIG --> INSTANCE_MGR
-
-    SETTINGS_MGR --> SETTINGS_EXEC
-    INSTANCE_MGR --> INSTANCE_EXEC
-
-    SETTINGS_EXEC --> CLAUDE_DETECT
-    INSTANCE_EXEC --> CLAUDE_DETECT
-
-    CLAUDE_DETECT --> API
-```
-
----
+<br>
 
 ## Architecture
 
@@ -247,9 +205,9 @@ flowchart TD
 
 ### Shared Data (v3.1)
 
-Commands and skills symlinked from `~/.ccs/shared/` - no duplication across profiles.
+Commands and skills symlinked from `~/.ccs/shared/` - **no duplication across profiles**.
 
-```
+```plaintext
 ~/.ccs/
 ├── shared/                  # Shared across all profiles
 │   ├── agents/
@@ -261,85 +219,270 @@ Commands and skills symlinked from `~/.ccs/shared/` - no duplication across prof
 │       ├── commands@ → shared/commands/
 │       ├── skills@ → shared/skills/
 │       ├── settings.json    # API keys, credentials
-│       └── sessions/        # Conversation history
+│       ├── sessions/        # Conversation history
 │       └── ...
 ```
 
-**Shared**: commands/, skills/, agents/
-**Profile-specific**: settings.json, sessions/, todolists/, logs/
+| Type | Files |
+|:-----|:------|
+| **Shared** | `commands/`, `skills/`, `agents/` |
+| **Profile-specific** | `settings.json`, `sessions/`, `todolists/`, `logs/` |
 
-**[i] Windows**: Copies dirs if symlinks unavailable (enable Developer Mode for true symlinks)
+> [!NOTE]
+> **Windows**: Copies directories if symlinks unavailable (enable Developer Mode for true symlinks)
 
----
+<br>
+
+## Usage Examples
+
+### Basic Switching
+
+```bash
+ccs              # Claude subscription (default)
+ccs glm          # GLM (cost-optimized)
+ccs kimi         # Kimi (with thinking support)
+```
+
+### Multi-Account Setup
+
+```bash
+# Create accounts
+ccs auth create work
+ccs auth create personal
+```
+
+**Run concurrently in separate terminals:**
+
+```bash
+# Terminal 1 - Work
+ccs work "implement feature"
+
+# Terminal 2 - Personal (concurrent)
+ccs personal "review code"
+```
+
+### Help & Version
+
+```bash
+ccs --version    # Show version
+ccs --help       # Show all commands and options
+```
+
+<br>
 
 ## GLM with Thinking (GLMT)
 
-> **[!] CẢNH BÁO: CHƯA SẴN SÀNG SẢN XUẤT**
+> [!CAUTION]
+> ### NOT PRODUCTION READY - EXPERIMENTAL FEATURE
 >
-> **GLMT là thử nghiệm và yêu cầu gỡ lỗi sâu rộng**:
-> - Streaming và hỗ trợ công cụ vẫn đang phát triển
-> - Có thể gặp lỗi, timeout, hoặc phản hồi không đầy đủ
-> - Yêu cầu gỡ lỗi thường xuyên và can thiệp thủ công
-> - **Không khuyến nghị cho quy trình quan trọng hoặc sử dụng sản xuất**
+> **GLMT is experimental and requires extensive debugging**:
+> - Streaming and tool support still under active development
+> - May experience unexpected errors, timeouts, or incomplete responses
+> - Requires frequent debugging and manual intervention
+> - **Not recommended for critical workflows or production use**
 >
-> **Phương án thay thế cho GLM Thinking**: Cân nhắc trải qua **CCR hustle** với **Transformer của Bedolla** (ZaiTransformer) để có triển khai ổn định hơn.
+> **Alternative for GLM Thinking**: Consider going through the **CCR hustle** with the **Transformer of Bedolla** ([ZaiTransformer](https://github.com/Bedolla/ZaiTransformer/)) for a more stable implementation.
+
+> [!IMPORTANT]
+> GLMT requires npm installation (`npm install -g @kaitranntt/ccs`). Not available in native shell versions (requires Node.js HTTP server).
+
+<br>
+
+> [!NOTE]
+> ### Acknowledgments: The Foundation That Made GLMT Possible
 >
-> **[!] Quan trọng**: GLMT yêu cầu cài đặt npm (`npm install -g @kaitranntt/ccs`). Không có trong phiên bản shell gốc (yêu cầu Node.js HTTP server).
+> **CCS's GLMT implementation owes its existence to the groundbreaking work of [@Bedolla](https://github.com/Bedolla)**, who created [ZaiTransformer](https://github.com/Bedolla/ZaiTransformer/) - the **first integration** to bridge [Claude Code Router (CCR)](https://github.com/musistudio/claude-code-router) with Z.AI's reasoning capabilities.
+>
+> Before ZaiTransformer, no one had successfully integrated Z.AI's thinking mode with Claude Code's workflow. Bedolla's work wasn't just helpful - it was **foundational**. His implementation of request/response transformation architecture, thinking mode control mechanisms, and embedded proxy design directly inspired and enabled GLMT's design.
+>
+> **Without ZaiTransformer's pioneering work, GLMT wouldn't exist in its current form.** If you benefit from GLMT's thinking capabilities, please consider starring [ZaiTransformer](https://github.com/Bedolla/ZaiTransformer/) to support pioneering work in the Claude Code ecosystem.
 
-### GLM vs GLMT
+<br>
 
-| Tính năng | GLM (`ccs glm`) | GLMT (`ccs glmt`) |
-|-----------|-----------------|-------------------|
-| **Endpoint** | Tương thích Anthropic | Tương thích OpenAI |
-| **Thinking** | Không | Thử nghiệm (reasoning_content) |
-| **Tool Support** | Cơ bản | **Không ổn định (v3.5+)** |
-| **MCP Tools** | Giới hạn | **Lỗi (v3.5+)** |
-| **Streaming** | Ổn định | **Thử nghiệm (v3.4+)** |
-| **TTFB** | <500ms | <500ms (đôi khi), 2-10s+ (thường xuyên) |
-| **Use Case** | Công việc đáng tin cậy | **Chỉ thử nghiệm gỡ lỗi** |
+<details>
+<summary><h3>GLM vs GLMT Comparison</h3></summary>
 
----
+<br>
 
-## ⚡ Tính Năng
+<div align="center">
 
-- **Chuyển Đổi Ngay Lập Tức** - `ccs glm` chuyển sang GLM, không cần sửa config
-- **Phiên Đồng Thời** - Chạy nhiều profile cùng lúc ở các terminal khác nhau
-- **Instance Riêng Biệt** - Mỗi profile có config riêng (`~/.ccs/instances/<profile>/`)
-- **Đa Nền Tảng** - macOS, Linux, Windows - hoạt động giống nhau
-- **Không Downtime** - Chuyển đổi ngay lập tức, không gián đoạn workflow
+| Feature | GLM (`ccs glm`) | GLMT (`ccs glmt`) |
+|:--------|:----------------|:------------------|
+| **Endpoint** | Anthropic-compatible | OpenAI-compatible |
+| **Thinking** | No | Experimental (`reasoning_content`) |
+| **Tool Support** | Basic | **Unstable (v3.5+)** |
+| **MCP Tools** | Limited | **Buggy (v3.5+)** |
+| **Streaming** | Stable | **Experimental (v3.4+)** |
+| **TTFB** | <500ms | <500ms (sometimes), 2-10s+ (often) |
+| **Use Case** | Reliable work | **Debugging experiments only** |
 
+</div>
 
----
+</details>
 
-## 💻 Ví Dụ Sử Dụng
+<br>
+
+<details>
+<summary><h3>Tool Support (v3.5) - EXPERIMENTAL</h3></summary>
+
+<br>
+
+**GLMT attempts MCP tools and function calling:**
+
+- **Bidirectional Transformation**: Anthropic tools ↔ OpenAI format (unstable)
+- **MCP Integration**: MCP tools sometimes execute (often output XML garbage)
+- **Streaming Tool Calls**: Real-time tool calls (when not crashing)
+- **Backward Compatible**: May break existing thinking support
+- **Configuration Required**: Frequent manual debugging needed
+
+</details>
+
+<details>
+<summary><h3>Streaming Support (v3.4) - OFTEN FAILS</h3></summary>
+
+<br>
+
+**GLMT attempts real-time streaming** with incremental reasoning content delivery:
+
+- **Default**: Streaming enabled (TTFB <500ms when it works)
+- **Auto-fallback**: Frequently switches to buffered mode due to errors
+- **Thinking parameter**: Claude CLI `thinking` parameter sometimes works
+  - May ignore `thinking.type` and `budget_tokens`
+  - Precedence: CLI parameter > message tags > default (when not broken)
+
+**Status**: Z.AI (tested, tool calls frequently break, requires constant debugging)
+
+</details>
+
+<details>
+<summary><h3>How It Works (When It Works)</h3></summary>
+
+<br>
+
+1. CCS spawns embedded HTTP proxy on localhost (if not crashing)
+2. Proxy attempts to convert Anthropic format → OpenAI format (often fails)
+3. Tries to transform Anthropic tools → OpenAI function calling format (buggy)
+4. Forwards to Z.AI with reasoning parameters and tools (when not timing out)
+5. Attempts to convert `reasoning_content` → thinking blocks (partial or broken)
+6. Attempts to convert OpenAI `tool_calls` → Anthropic `tool_use` blocks (XML garbage common)
+7. Thinking and tool calls sometimes appear in Claude Code UI (when not broken)
+
+</details>
+
+<details>
+<summary><h3>Control Tags & Keywords</h3></summary>
+
+<br>
+
+**Control Tags**:
+- `<Thinking:On|Off>` - Enable/disable reasoning blocks (default: On)
+- `<Effort:Low|Medium|High>` - Control reasoning depth (deprecated - Z.AI only supports binary thinking)
+
+**Thinking Keywords** (inconsistent activation):
+- `think` - Sometimes enables reasoning (low effort)
+- `think hard` - Sometimes enables reasoning (medium effort)
+- `think harder` - Sometimes enables reasoning (high effort)
+- `ultrathink` - Attempts maximum reasoning depth (often breaks)
+
+</details>
+
+<details>
+<summary><h3>Environment Variables</h3></summary>
+
+<br>
+
+**GLMT features** (all experimental):
+- Forced English output enforcement (sometimes works)
+- Random thinking mode activation (unpredictable)
+- Attempted streaming with frequent fallback to buffered mode
+
+**General**:
+- `CCS_DEBUG_LOG=1` - Enable debug file logging
+- `CCS_CLAUDE_PATH=/path/to/claude` - Custom Claude CLI path
+
+</details>
+
+<details>
+<summary><h3>API Key Setup</h3></summary>
+
+<br>
 
 ```bash
-ccs              # Claude subscription (mặc định)
-ccs glm          # GLM (không thinking)
-ccs glmt         # GLM với thinking
-ccs kimi         # Kimi cho Coding
-ccs --version    # Hiển thị phiên bản
+# Edit GLMT settings
+nano ~/.ccs/glmt.settings.json
 ```
 
-### Phiên Đồng Thời (Multi-Account)
+Set Z.AI API key (requires coding plan):
+
+```json
+{
+  "env": {
+    "ANTHROPIC_AUTH_TOKEN": "your-z-ai-api-key"
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><h3>Security Limits (DoS Protection)</h3></summary>
+
+<br>
+
+**v3.4 Protection Limits**:
+
+| Limit | Value | Purpose |
+|:------|:------|:--------|
+| **SSE buffer** | 1MB max per event | Prevent buffer overflow |
+| **Content buffer** | 10MB max per block | Limit thinking/text blocks |
+| **Content blocks** | 100 max per message | Prevent DoS attacks |
+| **Request timeout** | 120s | Both streaming and buffered |
+
+</details>
+
+<details>
+<summary><h3>Debugging</h3></summary>
+
+<br>
+
+**Enable verbose logging**:
 ```bash
-# Tạo nhiều tài khoản Claude
-ccs auth create cong-ty    # Tài khoản công ty
-ccs auth create ca-nhan    # Tài khoản cá nhân
-ccs auth create team       # Tài khoản team
-
-# Terminal 1 - Tài khoản công ty
-ccs cong-ty "implement feature"
-
-# Terminal 2 - Tài khoản cá nhân (chạy đồng thời)
-ccs ca-nhan "review code"
+ccs glmt --verbose "your prompt"
 ```
 
----
+**Enable debug file logging**:
+```bash
+export CCS_DEBUG_LOG=1
+ccs glmt --verbose "your prompt"
+# Logs: ~/.ccs/logs/
+```
 
-### 🗑️ Gỡ Cài Đặt
+**GLMT debugging**:
+```bash
+# Verbose logging shows streaming status and reasoning details
+ccs glmt --verbose "test"
+```
 
-**Package Managers**
+**Check reasoning content**:
+```bash
+cat ~/.ccs/logs/*response-openai.json | jq '.choices[0].message.reasoning_content'
+```
+
+**Troubleshooting**:
+- **If absent**: Z.AI API issue (verify key, account status)
+- **If present**: Transformation issue (check `response-anthropic.json`)
+
+</details>
+
+<br>
+
+## Uninstall
+
+<details>
+<summary><h3>Package Managers</h3></summary>
+
+<br>
+
 ```bash
 # npm
 npm uninstall -g @kaitranntt/ccs
@@ -354,57 +497,63 @@ pnpm remove -g @kaitranntt/ccs
 bun remove -g @kaitranntt/ccs
 ```
 
-**Uninstaller Chính Thức**
+</details>
 
-**macOS / Linux**
+<details>
+<summary><h3>Official Uninstaller</h3></summary>
+
+<br>
+
 ```bash
+# macOS / Linux
 curl -fsSL ccs.kaitran.ca/uninstall | bash
-```
 
-**Windows PowerShell**
-```powershell
+# Windows PowerShell
 irm ccs.kaitran.ca/uninstall | iex
 ```
 
----
+</details>
 
-## 🎯 Triết Lý
+<br>
 
-- **YAGNI**: Không có tính năng "phòng hờ"
-- **KISS**: Bash đơn giản, không phức tạp
-- **DRY**: Một nguồn chân lý duy nhất (config)
+## 🎯 Philosophy
 
----
+- **YAGNI**: No features "just in case"
+- **KISS**: Simple bash, no complexity
+- **DRY**: One source of truth (config)
 
-## 📖 Tài Liệu
+## 📖 Documentation
 
-**Tài liệu đầy đủ trong [docs/](./docs/)**:
-- [Hướng dẫn Cài đặt](./docs/en/installation.md)
-- [Cấu hình](./docs/en/configuration.md)
-- [Ví dụ Sử dụng](./docs/en/usage.md)
+**Complete documentation in [docs/](./docs/)**:
+- [Installation Guide](./docs/en/installation.md)
+- [Configuration](./docs/en/configuration.md)
+- [Usage Examples](./docs/en/usage.md)
 - [System Architecture](./docs/system-architecture.md)
 - [GLMT Control Mechanisms](./docs/glmt-controls.md)
-- [Khắc phục Sự cố](./docs/en/troubleshooting.md)
-- [Đóng góp](./CONTRIBUTING.md)
+- [Troubleshooting](./docs/en/troubleshooting.md)
+- [Contributing](./CONTRIBUTING.md)
 
----
+## 🤝 Contributing
 
-## 🤝 Đóng Góp
+We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md) for details.
 
-Chúng tôi chào mừng đóng góp! Vui lòng xem [Hướng dẫn Đóng góp](./CONTRIBUTING.md) để biết chi tiết.
-
----
-
-## 📄 Giấy Phép
-
-CCS được cấp phép theo [Giấy phép MIT](LICENSE).
-
----
+## Star History
 
 <div align="center">
 
-**Được tạo với ❤️ cho những lập trình viên hay hết rate limit**
+<img src="https://api.star-history.com/svg?repos=kaitranntt/ccs&type=timeline&logscale&legend=top-left" alt="Star History Chart" width="800">
 
-[⭐ Star repo này](https://github.com/kaitranntt/ccs) | [🐛 Báo cáo vấn đề](https://github.com/kaitranntt/ccs/issues) | [📖 Đọc tài liệu](./docs/en/)
+</div>
+
+
+## License
+
+CCS is licensed under the [MIT License](LICENSE).
+
+<div align="center">
+
+**Made with ❤️ for developers who hit rate limits too often**
+
+[⭐ Star this repo](https://github.com/kaitranntt/ccs) | [🐛 Report issues](https://github.com/kaitranntt/ccs/issues) | [📖 Read docs](./docs/en/)
 
 </div>

@@ -1,12 +1,12 @@
-# CCS - Claude Code Switch
-
 <div align="center">
+
+# CCS - Claude Code Switch
 
 ![CCS Logo](docs/assets/ccs-logo-medium.png)
 
-**One command, zero downtime, multiple accounts**
+### One command, zero downtime, multiple accounts
 
-Switch between multiple Claude accounts, GLM, and Kimi instantly.<br>
+**Switch between multiple Claude accounts, GLM, and Kimi instantly.**<br>
 Stop hitting rate limits. Keep working continuously.
 
 
@@ -19,27 +19,20 @@ Stop hitting rate limits. Keep working continuously.
 
 </div>
 
----
+<br>
 
-## 🚀 Quick Start
-
-### 🔑 Prerequisites
-
-**Before installing CCS, make sure you're logged into Claude CLI with your subscription account:**
-```bash
-claude /login
-```
+## Quick Start
 
 ### Installation
 
-#### Option 1: npm Package (Recommended)
+**npm Package (Recommended)**
 
 **macOS / Linux / Windows**
 ```bash
 npm install -g @kaitranntt/ccs
 ```
 
-All major package managers are supported:
+**All major package managers are supported:**
 
 ```bash
 # yarn
@@ -52,7 +45,10 @@ pnpm add -g @kaitranntt/ccs
 bun add -g @kaitranntt/ccs
 ```
 
-#### Option 2: Direct Install (Traditional)
+<details>
+<summary><strong>Alternative: Direct Install (Traditional)</strong></summary>
+
+<br>
 
 **macOS / Linux**
 ```bash
@@ -64,7 +60,11 @@ curl -fsSL ccs.kaitran.ca/install | bash
 irm ccs.kaitran.ca/install | iex
 ```
 
-> **💡 Performance Tip**: Traditional installs bypass Node.js routing for faster startup, but I prioritize npm updates due to easier deployment automation.
+**Note:** Traditional installs bypass Node.js routing for faster startup, but npm is prioritized for easier deployment automation.
+
+</details>
+
+<br>
 
 ### Configuration (Auto-created)
 
@@ -82,7 +82,10 @@ irm ccs.kaitran.ca/install | iex
 }
 ```
 
-### Custom Claude CLI Path
+<details>
+<summary><h3>Custom Claude CLI Path</h3></summary>
+
+<br>
 
 If Claude CLI is installed in a non-standard location (D drive, custom directory), set `CCS_CLAUDE_PATH`:
 
@@ -91,9 +94,14 @@ export CCS_CLAUDE_PATH="/path/to/claude"              # Unix
 $env:CCS_CLAUDE_PATH = "D:\Tools\Claude\claude.exe"   # Windows
 ```
 
-**See [Troubleshooting Guide](./docs/en/troubleshooting.md#claude-cli-in-non-standard-location) for detailed setup instructions.**
+**See also:** [Troubleshooting Guide](./docs/en/troubleshooting.md#claude-cli-in-non-standard-location) for detailed setup instructions.
 
-### Windows Symlink Support (Developer Mode)
+</details>
+
+<details>
+<summary><h3>Windows Symlink Support (Developer Mode)</h3></summary>
+
+<br>
 
 **Windows users**: Enable Developer Mode for true symlinks (better performance, instant sync):
 
@@ -101,50 +109,73 @@ $env:CCS_CLAUDE_PATH = "D:\Tools\Claude\claude.exe"   # Windows
 2. Enable **Developer Mode**
 3. Reinstall CCS: `npm install -g @kaitranntt/ccs`
 
-**Without Developer Mode**: CCS automatically falls back to copying directories (works but no instant sync across profiles).
+**Warning:** Without Developer Mode, CCS automatically falls back to copying directories (works but no instant sync across profiles).
 
----
+</details>
+
+<br>
 
 ### Your First Switch
 
-> **⚠️ Important**: Before using GLM/GLMT or Kimi profiles, update API keys in settings files:
-> - **GLM**: Edit `~/.ccs/glm.settings.json` and add your GLM API key
-> - **GLMT**: Edit `~/.ccs/glmt.settings.json` and add your Z.AI API key (requires coding plan)
+> [!IMPORTANT]
+> **Before using alternative models, update API keys in settings files:**
+>
+> - **GLM**: Edit `~/.ccs/glm.settings.json` and add your Z.AI Coding Plan API Key
+> - **GLMT**: Edit `~/.ccs/glmt.settings.json` and add your Z.AI Coding Plan API Key
 > - **Kimi**: Edit `~/.ccs/kimi.settings.json` and add your Kimi API key
 
+<br>
+
+**Parallel Workflow: Planning + Execution**
+
 ```bash
-# Default Claude subscription
-ccs "Plan microservices architecture"
+# Terminal 1 - Planning (Claude Sonnet)
+ccs "Plan a REST API with authentication and rate limiting"
 
-# Switch to GLM (cost-optimized)
-ccs glm "Create REST API"
-
-# GLM with thinking mode
-ccs glmt "Solve algorithmic problem"
-
-# Kimi for coding
-ccs kimi "Write integration tests"
+# Terminal 2 - Execution (GLM, cost-optimized)
+ccs glm "Implement the user authentication endpoints from the plan"
 ```
 
----
+<details>
+<summary><strong>Thinking Models (Kimi & GLMT)</strong></summary>
+
+<br>
+
+```bash
+# Kimi - Stable thinking support
+ccs kimi "Design a caching strategy with trade-off analysis"
+
+# GLMT - Experimental (see full disclaimer below)
+ccs glmt "Debug complex algorithm with reasoning steps"
+```
+
+**Note:** GLMT is experimental and unstable. See [GLM with Thinking (GLMT)](#glm-with-thinking-glmt) section below for full details.
+
+</details>
+
+<br>
 
 ## The Daily Developer Pain Point
 
+**Session limits shouldn't kill your flow state.**
+
 Developers face multiple subscription scenarios daily:
 
-1. **Account Separation**: Company Claude account vs personal Claude → you must manually switch contexts to keep work and personal separate
-2. **Rate Limits Hit**: Claude stops mid-project → you manually edit `~/.claude/settings.json`
-3. **Cost Management**: 2-3 Pro subscriptions ($20/month each) vs Claude Max at 5x cost ($100/month) → Pro tier is the practical ceiling for most developers
-4. **Model Choice**: Different tasks benefit from different model strengths → manual switching
+1. **Account Separation** - Company Claude account vs personal Claude → you must manually switch contexts to keep work and personal separate
+2. **Rate Limits Hit** - Claude stops mid-project → you manually edit `~/.claude/settings.json`
+3. **Cost Management** - 2-3 Pro subscriptions ($20/month each) vs Claude Max at 5x cost ($100/month) → Pro tier is the practical ceiling for most developers
+4. **Model Choice** - Different tasks benefit from different model strengths → manual switching
 
-Manual context switching breaks your workflow. **CCS manages it seamlessly**.
+**Manual context switching breaks your workflow. CCS manages it seamlessly.**
+
+<br>
 
 ## Why CCS Instead of Manual Switching?
 
 <div align="center">
 
 | Feature | Benefit |
-|---------|---------|
+|:--------|:--------|
 | **Account Isolation** | Keep work separate from personal |
 | **Cost Optimization** | 2-3 Pro accounts vs Max at 5x cost |
 | **Instant Switching** | One command, no file editing |
@@ -154,7 +185,7 @@ Manual context switching breaks your workflow. **CCS manages it seamlessly**.
 
 </div>
 
----
+<br>
 
 ## Architecture
 
@@ -170,9 +201,9 @@ Manual context switching breaks your workflow. **CCS manages it seamlessly**.
 
 ### Shared Data (v3.1)
 
-Commands and skills symlinked from `~/.ccs/shared/` - no duplication across profiles.
+Commands and skills symlinked from `~/.ccs/shared/` - **no duplication across profiles**.
 
-```
+```plaintext
 ~/.ccs/
 ├── shared/                  # Shared across all profiles
 │   ├── agents/
@@ -184,56 +215,61 @@ Commands and skills symlinked from `~/.ccs/shared/` - no duplication across prof
 │       ├── commands@ → shared/commands/
 │       ├── skills@ → shared/skills/
 │       ├── settings.json    # API keys, credentials
-│       └── sessions/        # Conversation history
+│       ├── sessions/        # Conversation history
 │       └── ...
 ```
 
-**Shared**: commands/, skills/, agents/
-**Profile-specific**: settings.json, sessions/, todolists/, logs/
+| Type | Files |
+|:-----|:------|
+| **Shared** | `commands/`, `skills/`, `agents/` |
+| **Profile-specific** | `settings.json`, `sessions/`, `todolists/`, `logs/` |
 
-**[i] Windows**: Copies dirs if symlinks unavailable (enable Developer Mode for true symlinks)
+> [!NOTE]
+> **Windows**: Copies directories if symlinks unavailable (enable Developer Mode for true symlinks)
 
----
+<br>
 
 ## Usage Examples
 
 ### Basic Switching
+
 ```bash
 ccs              # Claude subscription (default)
-ccs glm          # GLM (no thinking)
-ccs glmt         # GLM with thinking
-ccs kimi         # Kimi for Coding
-ccs --version    # Show version
+ccs glm          # GLM (cost-optimized)
+ccs kimi         # Kimi (with thinking support)
 ```
 
 ### Multi-Account Setup
+
 ```bash
 # Create accounts
 ccs auth create work
 ccs auth create personal
+```
 
-# Terminal 1
+**Run concurrently in separate terminals:**
+
+```bash
+# Terminal 1 - Work
 ccs work "implement feature"
 
-# Terminal 2 (concurrent)
+# Terminal 2 - Personal (concurrent)
 ccs personal "review code"
 ```
 
-### Custom Claude CLI Path
+### Help & Version
 
-Non-standard installation location:
 ```bash
-export CCS_CLAUDE_PATH="/path/to/claude"              # Unix
-$env:CCS_CLAUDE_PATH = "D:\Tools\Claude\claude.exe"   # Windows
+ccs --version    # Show version
+ccs --help       # Show all commands and options
 ```
 
-See [Troubleshooting Guide](./docs/en/troubleshooting.md#claude-cli-in-non-standard-location)
-
----
+<br>
 
 ## GLM with Thinking (GLMT)
 
-> **[!] WARNING: NOT PRODUCTION READY**
+> [!CAUTION]
+> ### NOT PRODUCTION READY - EXPERIMENTAL FEATURE
 >
 > **GLMT is experimental and requires extensive debugging**:
 > - Streaming and tool support still under active development
@@ -241,13 +277,15 @@ See [Troubleshooting Guide](./docs/en/troubleshooting.md#claude-cli-in-non-stand
 > - Requires frequent debugging and manual intervention
 > - **Not recommended for critical workflows or production use**
 >
-> **Alternative for GLM Thinking**: Consider going through the **CCR hustle** with the **Transformer of Bedolla** (ZaiTransformer) for a more stable implementation.
->
-> **[!] Important**: GLMT requires npm installation (`npm install -g @kaitranntt/ccs`). Not available in native shell versions (requires Node.js HTTP server).
+> **Alternative for GLM Thinking**: Consider going through the **CCR hustle** with the **Transformer of Bedolla** ([ZaiTransformer](https://github.com/Bedolla/ZaiTransformer/)) for a more stable implementation.
 
-### Acknowledgments: The Foundation That Made GLMT Possible
+> [!IMPORTANT]
+> GLMT requires npm installation (`npm install -g @kaitranntt/ccs`). Not available in native shell versions (requires Node.js HTTP server).
 
-> **[i] Pioneering Work by [@Bedolla](https://github.com/Bedolla)**
+<br>
+
+> [!NOTE]
+> ### Acknowledgments: The Foundation That Made GLMT Possible
 >
 > **CCS's GLMT implementation owes its existence to the groundbreaking work of [@Bedolla](https://github.com/Bedolla)**, who created [ZaiTransformer](https://github.com/Bedolla/ZaiTransformer/) - the **first integration** to bridge [Claude Code Router (CCR)](https://github.com/musistudio/claude-code-router) with Z.AI's reasoning capabilities.
 >
@@ -261,23 +299,37 @@ See [Troubleshooting Guide](./docs/en/troubleshooting.md#claude-cli-in-non-stand
 >
 > **Recognition**: If you benefit from GLMT's thinking capabilities, you're benefiting from Bedolla's vision and engineering. Please consider starring [ZaiTransformer](https://github.com/Bedolla/ZaiTransformer/) to support pioneering work in the Claude Code ecosystem.
 
----
+<br>
 
-### GLM vs GLMT
+<details>
+<summary><h3>GLM vs GLMT Comparison</h3></summary>
+
+<br>
+
+<div align="center">
 
 | Feature | GLM (`ccs glm`) | GLMT (`ccs glmt`) |
-|---------|-----------------|-------------------|
+|:--------|:----------------|:------------------|
 | **Endpoint** | Anthropic-compatible | OpenAI-compatible |
-| **Thinking** | No | Experimental (reasoning_content) |
+| **Thinking** | No | Experimental (`reasoning_content`) |
 | **Tool Support** | Basic | **Unstable (v3.5+)** |
 | **MCP Tools** | Limited | **Buggy (v3.5+)** |
 | **Streaming** | Stable | **Experimental (v3.4+)** |
 | **TTFB** | <500ms | <500ms (sometimes), 2-10s+ (often) |
 | **Use Case** | Reliable work | **Debugging experiments only** |
 
-### Tool Support (v3.5)
+</div>
 
-**GLMT attempts MCP tools and function calling (EXPERIMENTAL)**:
+</details>
+
+<br>
+
+<details>
+<summary><h3>Tool Support (v3.5) - EXPERIMENTAL</h3></summary>
+
+<br>
+
+**GLMT attempts MCP tools and function calling:**
 
 - **Bidirectional Transformation**: Anthropic tools ↔ OpenAI format (unstable)
 - **MCP Integration**: MCP tools sometimes execute (often output XML garbage)
@@ -285,9 +337,14 @@ See [Troubleshooting Guide](./docs/en/troubleshooting.md#claude-cli-in-non-stand
 - **Backward Compatible**: May break existing thinking support
 - **Configuration Required**: Frequent manual debugging needed
 
-### Streaming Support (v3.4)
+</details>
 
-**GLMT attempts real-time streaming** with incremental reasoning content delivery (OFTEN FAILS).
+<details>
+<summary><h3>Streaming Support (v3.4) - OFTEN FAILS</h3></summary>
+
+<br>
+
+**GLMT attempts real-time streaming** with incremental reasoning content delivery:
 
 - **Default**: Streaming enabled (TTFB <500ms when it works)
 - **Auto-fallback**: Frequently switches to buffered mode due to errors
@@ -295,19 +352,29 @@ See [Troubleshooting Guide](./docs/en/troubleshooting.md#claude-cli-in-non-stand
   - May ignore `thinking.type` and `budget_tokens`
   - Precedence: CLI parameter > message tags > default (when not broken)
 
-**Barely working**: Z.AI (tested, tool calls frequently break, requires constant debugging)
+**Status**: Z.AI (tested, tool calls frequently break, requires constant debugging)
 
-### How It Works (When It Works)
+</details>
+
+<details>
+<summary><h3>How It Works (When It Works)</h3></summary>
+
+<br>
 
 1. CCS spawns embedded HTTP proxy on localhost (if not crashing)
 2. Proxy attempts to convert Anthropic format → OpenAI format (often fails)
 3. Tries to transform Anthropic tools → OpenAI function calling format (buggy)
 4. Forwards to Z.AI with reasoning parameters and tools (when not timing out)
 5. Attempts to convert `reasoning_content` → thinking blocks (partial or broken)
-6. Attempts to convert OpenAI `tool_calls` → Anthropic tool_use blocks (XML garbage common)
+6. Attempts to convert OpenAI `tool_calls` → Anthropic `tool_use` blocks (XML garbage common)
 7. Thinking and tool calls sometimes appear in Claude Code UI (when not broken)
 
-### Control Tags & Keywords
+</details>
+
+<details>
+<summary><h3>Control Tags & Keywords</h3></summary>
+
+<br>
 
 **Control Tags**:
 - `<Thinking:On|Off>` - Enable/disable reasoning blocks (default: On)
@@ -319,7 +386,12 @@ See [Troubleshooting Guide](./docs/en/troubleshooting.md#claude-cli-in-non-stand
 - `think harder` - Sometimes enables reasoning (high effort)
 - `ultrathink` - Attempts maximum reasoning depth (often breaks)
 
-### Environment Variables
+</details>
+
+<details>
+<summary><h3>Environment Variables</h3></summary>
+
+<br>
 
 **GLMT features** (all experimental):
 - Forced English output enforcement (sometimes works)
@@ -330,13 +402,21 @@ See [Troubleshooting Guide](./docs/en/troubleshooting.md#claude-cli-in-non-stand
 - `CCS_DEBUG_LOG=1` - Enable debug file logging
 - `CCS_CLAUDE_PATH=/path/to/claude` - Custom Claude CLI path
 
-### API Key Setup
+</details>
+
+<details>
+<summary><h3>API Key Setup</h3></summary>
+
+<br>
 
 ```bash
 # Edit GLMT settings
 nano ~/.ccs/glmt.settings.json
+```
 
-# Set Z.AI API key (requires coding plan)
+Set Z.AI API key (requires coding plan):
+
+```json
 {
   "env": {
     "ANTHROPIC_AUTH_TOKEN": "your-z-ai-api-key"
@@ -344,15 +424,28 @@ nano ~/.ccs/glmt.settings.json
 }
 ```
 
-### Security Limits
+</details>
 
-**DoS protection** (v3.4):
-- SSE buffer: 1MB max per event
-- Content buffer: 10MB max per block (thinking/text)
-- Content blocks: 100 max per message
-- Request timeout: 120s (both streaming and buffered)
+<details>
+<summary><h3>Security Limits (DoS Protection)</h3></summary>
 
-### Debugging
+<br>
+
+**v3.4 Protection Limits**:
+
+| Limit | Value | Purpose |
+|:------|:------|:--------|
+| **SSE buffer** | 1MB max per event | Prevent buffer overflow |
+| **Content buffer** | 10MB max per block | Limit thinking/text blocks |
+| **Content blocks** | 100 max per message | Prevent DoS attacks |
+| **Request timeout** | 120s | Both streaming and buffered |
+
+</details>
+
+<details>
+<summary><h3>Debugging</h3></summary>
+
+<br>
 
 **Enable verbose logging**:
 ```bash
@@ -377,39 +470,59 @@ ccs glmt --verbose "test"
 cat ~/.ccs/logs/*response-openai.json | jq '.choices[0].message.reasoning_content'
 ```
 
-**If absent**: Z.AI API issue (verify key, account status)
-**If present**: Transformation issue (check response-anthropic.json)
+**Troubleshooting**:
+- **If absent**: Z.AI API issue (verify key, account status)
+- **If present**: Transformation issue (check `response-anthropic.json`)
 
----
+</details>
+
+<br>
 
 ## Uninstall
 
-**Package Managers**
+<details>
+<summary><h3>Package Managers</h3></summary>
+
+<br>
+
 ```bash
+# npm
 npm uninstall -g @kaitranntt/ccs
+
+# yarn
 yarn global remove @kaitranntt/ccs
+
+# pnpm
 pnpm remove -g @kaitranntt/ccs
+
+# bun
 bun remove -g @kaitranntt/ccs
 ```
 
-**Official Uninstaller**
+</details>
+
+<details>
+<summary><h3>Official Uninstaller</h3></summary>
+
+<br>
+
 ```bash
 # macOS / Linux
 curl -fsSL ccs.kaitran.ca/uninstall | bash
 
-# Windows
+# Windows PowerShell
 irm ccs.kaitran.ca/uninstall | iex
 ```
 
----
+</details>
+
+<br>
 
 ## 🎯 Philosophy
 
 - **YAGNI**: No features "just in case"
 - **KISS**: Simple bash, no complexity
 - **DRY**: One source of truth (config)
-
----
 
 ## 📖 Documentation
 
@@ -422,19 +535,23 @@ irm ccs.kaitran.ca/uninstall | iex
 - [Troubleshooting](./docs/en/troubleshooting.md)
 - [Contributing](./CONTRIBUTING.md)
 
----
-
 ## 🤝 Contributing
 
 We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md) for details.
 
----
 
-## 📄 License
+## Star History
+
+<div align="center">
+
+<img src="https://api.star-history.com/svg?repos=kaitranntt/ccs&type=timeline&logscale&legend=top-left" alt="Star History Chart" width="800">
+
+</div>
+
+
+## License
 
 CCS is licensed under the [MIT License](LICENSE).
-
----
 
 <div align="center">
 
