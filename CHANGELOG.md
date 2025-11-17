@@ -2,6 +2,17 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/)
 
+## [4.1.3] - 2025-11-17
+
+### Fixed
+- **Doctor command delegation check false positive**
+  - Fixed `ccs doctor` incorrectly checking for delegation commands in `~/.ccs/shared/commands/ccs/` instead of `~/.ccs/.claude/commands/ccs/`
+  - Removed check for non-existent `create.md` file
+  - Now correctly detects installed delegation commands (glm.md, kimi.md) after npm install
+  - Users will no longer see "[!] Delegation commands not found" warning when delegation is properly installed
+
+---
+
 ## [4.1.2] - 2025-11-16
 
 ### Fixed
