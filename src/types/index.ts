@@ -16,12 +16,7 @@ export type {
 export { isConfig, isSettings } from './config';
 
 // CLI types
-export type {
-  ParsedArgs,
-  ClaudeSpawnOptions,
-  Platform,
-  ClaudeCliInfo,
-} from './cli';
+export type { ParsedArgs, ClaudeSpawnOptions, Platform, ClaudeCliInfo } from './cli';
 export { ExitCode } from './cli';
 
 // Delegation types
@@ -52,8 +47,4 @@ export type {
 
 // Utility types
 export { ErrorCode, LogLevel } from './utils';
-export type {
-  ColorName,
-  TerminalInfo,
-  Result,
-} from './utils';
+export type { ColorName, TerminalInfo, Result } from './utils';

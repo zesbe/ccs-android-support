@@ -156,7 +156,7 @@ export class DeltaAccumulator {
       type: type,
       content: '',
       started: true,
-      stopped: false
+      stopped: false,
     };
     this.contentBlocks.push(block);
 
@@ -215,7 +215,9 @@ export class DeltaAccumulator {
 
       // FIX: Log block closure for debugging (helps diagnose timing issues)
       if (block.type === 'thinking' && process.env.CCS_DEBUG === '1') {
-        console.error(`[DeltaAccumulator] Stopped thinking block ${block.index}: ${block.content?.length || 0} chars`);
+        console.error(
+          `[DeltaAccumulator] Stopped thinking block ${block.index}: ${block.content?.length || 0} chars`
+        );
       }
     }
   }
@@ -246,8 +248,8 @@ export class DeltaAccumulator {
         type: 'function',
         function: {
           name: '',
-          arguments: ''
-        }
+          arguments: '',
+        },
       };
       this.toolCalls.push(toolCall);
       this.toolCallsIndex[index] = toolCall;
@@ -304,7 +306,7 @@ export class DeltaAccumulator {
     const recentBlocks = this.contentBlocks.slice(-this.loopDetectionThreshold);
 
     // Check if all recent blocks are thinking blocks
-    const allThinking = recentBlocks.every(b => b.type === 'thinking');
+    const allThinking = recentBlocks.every((b) => b.type === 'thinking');
 
     // Check if no tool calls have been made at all
     const noToolCalls = this.toolCalls.length === 0;
@@ -342,8 +344,8 @@ export class DeltaAccumulator {
       loopDetected: this.loopDetected,
       usage: {
         input_tokens: this.inputTokens,
-        output_tokens: this.outputTokens
-      }
+        output_tokens: this.outputTokens,
+      },
     };
   }
 

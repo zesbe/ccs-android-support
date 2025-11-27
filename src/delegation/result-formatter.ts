@@ -56,7 +56,23 @@ class ResultFormatter {
    * Format execution result with complete source-of-truth
    */
   static format(result: ExecutionResult): string {
-    const { profile, cwd, exitCode, stdout, stderr, duration, success, content, sessionId, totalCost, numTurns, subtype, permissionDenials, errors, timedOut } = result;
+    const {
+      profile,
+      cwd,
+      exitCode,
+      stdout,
+      stderr,
+      duration,
+      success,
+      content,
+      sessionId,
+      totalCost,
+      numTurns,
+      subtype,
+      permissionDenials,
+      errors,
+      timedOut,
+    } = result;
 
     // Handle timeout (graceful termination)
     if (timedOut) {
@@ -124,7 +140,7 @@ class ResultFormatter {
       /write:\s*([^\n\r]+)/gi,
       /new file:\s*([^\n\r]+)/gi,
       /generated:\s*([^\n\r]+)/gi,
-      /added:\s*([^\n\r]+)/gi
+      /added:\s*([^\n\r]+)/gi,
     ];
 
     const modifiedPatterns = [
@@ -133,7 +149,7 @@ class ResultFormatter {
       /updated:\s*([^\n\r]+)/gi,
       /edit:\s*([^\n\r]+)/gi,
       /edited:\s*([^\n\r]+)/gi,
-      /changed:\s*([^\n\r]+)/gi
+      /changed:\s*([^\n\r]+)/gi,
     ];
 
     // Helper to check if file is infrastructure (should be ignored)
@@ -158,7 +174,12 @@ class ResultFormatter {
       while ((match = pattern.exec(output)) !== null) {
         const filePath = match[1].trim();
         // Don't include if already in created list or is infrastructure
-        if (filePath && !modified.includes(filePath) && !created.includes(filePath) && !isInfrastructure(filePath)) {
+        if (
+          filePath &&
+          !modified.includes(filePath) &&
+          !created.includes(filePath) &&
+          !isInfrastructure(filePath)
+        ) {
           modified.push(filePath);
         }
       }
@@ -171,8 +192,8 @@ class ResultFormatter {
         const findCmd = `find . -type f -mmin -5 -not -path "./.git/*" -not -path "./node_modules/*" -not -path "./.claude/*" 2>/dev/null | head -20`;
         const result = execSync(findCmd, { cwd, encoding: 'utf8', timeout: 5000 });
 
-        const files = result.split('\n').filter(f => f.trim());
-        files.forEach(file => {
+        const files = result.split('\n').filter((f) => f.trim());
+        files.forEach((file) => {
           const fullPath = path.join(cwd, file);
 
           // Double-check not infrastructure
@@ -188,7 +209,7 @@ class ResultFormatter {
 
             // If both mtime and ctime are very recent (within 10 minutes), likely created
             // ctime = inode change time, for new files this is close to creation time
-            const isVeryRecent = (now - mtime) < 600000 && (now - ctime) < 600000;
+            const isVeryRecent = now - mtime < 600000 && now - ctime < 600000;
             const timeDiff = Math.abs(mtime - ctime);
 
             // If mtime and ctime are very close (< 1 second apart) and both recent, it's created
@@ -232,7 +253,15 @@ class ResultFormatter {
   /**
    * Format info box with delegation details
    */
-  private static formatInfoBox(cwd: string, profile: string, duration: number, exitCode: number, sessionId?: string, totalCost?: number, numTurns?: number): string {
+  private static formatInfoBox(
+    cwd: string,
+    profile: string,
+    duration: number,
+    exitCode: number,
+    sessionId?: string,
+    totalCost?: number,
+    numTurns?: number
+  ): string {
     const modelName = this.getModelDisplayName(profile);
     const durationSec = (duration / 1000).toFixed(1);
 
@@ -245,7 +274,7 @@ class ResultFormatter {
       `Working Directory: ${this.truncate(cwd, boxWidth - 22)}`,
       `Model: ${modelName}`,
       `Duration: ${durationSec}s`,
-      `Exit Code: ${exitCode}`
+      `Exit Code: ${exitCode}`,
     ];
 
     // Add JSON-specific fields if available
@@ -321,10 +350,10 @@ class ResultFormatter {
    */
   private static getModelDisplayName(profile: string): string {
     const displayNames: Record<string, string> = {
-      'glm': 'GLM-4.6',
-      'glmt': 'GLM-4.6 (Thinking)',
-      'kimi': 'Kimi',
-      'default': 'Claude'
+      glm: 'GLM-4.6',
+      glmt: 'GLM-4.6 (Thinking)',
+      kimi: 'Kimi',
+      default: 'Claude',
     };
 
     return displayNames[profile] || profile.toUpperCase();

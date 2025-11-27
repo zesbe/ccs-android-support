@@ -53,7 +53,7 @@ export class ShellCompletionInstaller {
 
     // Copy completion scripts
     const files = ['ccs.bash', 'ccs.zsh', 'ccs.fish', 'ccs.ps1'];
-    files.forEach(file => {
+    files.forEach((file) => {
       const src = path.join(this.scriptsDir, file);
       const dest = path.join(this.completionDir, file);
 
@@ -72,7 +72,7 @@ export class ShellCompletionInstaller {
       if (!stat.isDirectory()) {
         throw new Error(
           `Cannot create directory: ${dirPath} exists but is a file.\n` +
-          `Please remove or rename this file and try again.`
+            `Please remove or rename this file and try again.`
         );
       }
       // Directory exists, nothing to do
@@ -118,7 +118,7 @@ export class ShellCompletionInstaller {
     return {
       success: true,
       message: `Added to ${rcFile}`,
-      reload: 'source ~/.bashrc'
+      reload: 'source ~/.bashrc',
     };
   }
 
@@ -142,10 +142,7 @@ export class ShellCompletionInstaller {
     fs.copyFileSync(completionPath, destFile);
 
     const marker = '# CCS shell completion';
-    const setupCmds = [
-      'fpath=(~/.zsh/completion $fpath)',
-      'autoload -Uz compinit && compinit'
-    ];
+    const setupCmds = ['fpath=(~/.zsh/completion $fpath)', 'autoload -Uz compinit && compinit'];
     const block = `\n${marker}\n${setupCmds.join('\n')}\n`;
 
     // Check if already installed
@@ -162,7 +159,7 @@ export class ShellCompletionInstaller {
     return {
       success: true,
       message: `Added to ${rcFile}`,
-      reload: 'source ~/.zshrc'
+      reload: 'source ~/.zshrc',
     };
   }
 
@@ -187,7 +184,7 @@ export class ShellCompletionInstaller {
     return {
       success: true,
       message: `Installed to ${destFile}`,
-      reload: 'Fish auto-loads completions (no reload needed)'
+      reload: 'Fish auto-loads completions (no reload needed)',
     };
   }
 
@@ -195,12 +192,9 @@ export class ShellCompletionInstaller {
    * Install PowerShell completion
    */
   private installPowerShell(): InstallResult {
-    const profilePath = process.env.PROFILE || path.join(
-      this.homeDir,
-      'Documents',
-      'PowerShell',
-      'Microsoft.PowerShell_profile.ps1'
-    );
+    const profilePath =
+      process.env.PROFILE ||
+      path.join(this.homeDir, 'Documents', 'PowerShell', 'Microsoft.PowerShell_profile.ps1');
     const completionPath = path.join(this.completionDir, 'ccs.ps1');
 
     if (!fs.existsSync(completionPath)) {
@@ -229,7 +223,7 @@ export class ShellCompletionInstaller {
     return {
       success: true,
       message: `Added to ${profilePath}`,
-      reload: '. $PROFILE'
+      reload: '. $PROFILE',
     };
   }
 
@@ -240,7 +234,9 @@ export class ShellCompletionInstaller {
     const targetShell = shell || this.detectShell();
 
     if (!targetShell) {
-      throw new Error('Could not detect shell. Please specify: --bash, --zsh, --fish, or --powershell');
+      throw new Error(
+        'Could not detect shell. Please specify: --bash, --zsh, --fish, or --powershell'
+      );
     }
 
     // Ensure completion files exist

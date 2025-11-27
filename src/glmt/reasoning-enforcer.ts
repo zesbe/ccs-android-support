@@ -63,7 +63,7 @@ export class ReasoningEnforcer {
     const prompt = this.selectPrompt(effort);
 
     // Strategy 1: Inject into system prompt (preferred)
-    const systemIndex = modifiedMessages.findIndex(m => m.role === 'system');
+    const systemIndex = modifiedMessages.findIndex((m) => m.role === 'system');
     if (systemIndex >= 0) {
       const systemMsg = modifiedMessages[systemIndex];
 
@@ -72,7 +72,7 @@ export class ReasoningEnforcer {
       } else if (Array.isArray(systemMsg.content)) {
         systemMsg.content.unshift({
           type: 'text',
-          text: prompt
+          text: prompt,
         });
       }
 
@@ -80,7 +80,7 @@ export class ReasoningEnforcer {
     }
 
     // Strategy 2: Prepend to first user message
-    const userIndex = modifiedMessages.findIndex(m => m.role === 'user');
+    const userIndex = modifiedMessages.findIndex((m) => m.role === 'user');
     if (userIndex >= 0) {
       const userMsg = modifiedMessages[userIndex];
 
@@ -89,7 +89,7 @@ export class ReasoningEnforcer {
       } else if (Array.isArray(userMsg.content)) {
         userMsg.content.unshift({
           type: 'text',
-          text: prompt
+          text: prompt,
         });
       }
 
@@ -179,7 +179,7 @@ OUTPUT FORMAT:
  - Final conclusion with rigorous justification)
 </reasoning_content>
 
-(Write your final answer here based on your exhaustive reasoning above)`
+(Write your final answer here based on your exhaustive reasoning above)`,
     };
   }
 }

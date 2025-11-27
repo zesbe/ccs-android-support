@@ -35,7 +35,7 @@ class SharedManager {
       { name: 'skills', type: 'directory' },
       { name: 'agents', type: 'directory' },
       { name: 'plugins', type: 'directory' },
-      { name: 'settings.json', type: 'file' }
+      { name: 'settings.json', type: 'file' },
     ];
   }
 
@@ -144,7 +144,9 @@ class SharedManager {
           } else if (item.type === 'file') {
             fs.copyFileSync(claudePath, sharedPath);
           }
-          console.log(`[!] Symlink failed for ${item.name}, copied instead (enable Developer Mode)`);
+          console.log(
+            `[!] Symlink failed for ${item.name}, copied instead (enable Developer Mode)`
+          );
         } else {
           throw err;
         }
@@ -183,7 +185,9 @@ class SharedManager {
           } else if (item.type === 'file') {
             fs.copyFileSync(targetPath, linkPath);
           }
-          console.log(`[!] Symlink failed for ${item.name}, copied instead (enable Developer Mode)`);
+          console.log(
+            `[!] Symlink failed for ${item.name}, copied instead (enable Developer Mode)`
+          );
         } else {
           throw err;
         }
@@ -319,7 +323,7 @@ class SharedManager {
       return;
     }
 
-    const instances = fs.readdirSync(this.instancesDir).filter(name => {
+    const instances = fs.readdirSync(this.instancesDir).filter((name) => {
       const instancePath = path.join(this.instancesDir, name);
       return fs.statSync(instancePath).isDirectory();
     });
@@ -367,7 +371,6 @@ class SharedManager {
             throw err;
           }
         }
-
       } catch (err) {
         console.log(`[!] Failed to migrate ${instance}: ${(err as Error).message}`);
       }

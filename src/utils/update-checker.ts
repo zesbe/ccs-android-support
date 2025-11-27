@@ -50,31 +50,35 @@ export function compareVersions(v1: string, v2: string): number {
  */
 function fetchLatestVersionFromGitHub(): Promise<string | null> {
   return new Promise((resolve) => {
-    const req = https.get(GITHUB_API_URL, {
-      headers: { 'User-Agent': 'CCS-Update-Checker' },
-      timeout: REQUEST_TIMEOUT
-    }, (res) => {
-      let data = '';
+    const req = https.get(
+      GITHUB_API_URL,
+      {
+        headers: { 'User-Agent': 'CCS-Update-Checker' },
+        timeout: REQUEST_TIMEOUT,
+      },
+      (res) => {
+        let data = '';
 
-      res.on('data', (chunk: Buffer) => {
-        data += chunk.toString();
-      });
+        res.on('data', (chunk: Buffer) => {
+          data += chunk.toString();
+        });
 
-      res.on('end', () => {
-        try {
-          if (res.statusCode !== 200) {
+        res.on('end', () => {
+          try {
+            if (res.statusCode !== 200) {
+              resolve(null);
+              return;
+            }
+
+            const release = JSON.parse(data) as { tag_name?: string };
+            const version = release.tag_name?.replace(/^v/, '') || null;
+            resolve(version);
+          } catch {
             resolve(null);
-            return;
           }
-
-          const release = JSON.parse(data) as { tag_name?: string };
-          const version = release.tag_name?.replace(/^v/, '') || null;
-          resolve(version);
-        } catch {
-          resolve(null);
-        }
-      });
-    });
+        });
+      }
+    );
 
     req.on('error', () => resolve(null));
     req.on('timeout', () => {
@@ -89,31 +93,35 @@ function fetchLatestVersionFromGitHub(): Promise<string | null> {
  */
 function fetchLatestVersionFromNpm(): Promise<string | null> {
   return new Promise((resolve) => {
-    const req = https.get(NPM_REGISTRY_URL, {
-      headers: { 'User-Agent': 'CCS-Update-Checker' },
-      timeout: REQUEST_TIMEOUT
-    }, (res) => {
-      let data = '';
+    const req = https.get(
+      NPM_REGISTRY_URL,
+      {
+        headers: { 'User-Agent': 'CCS-Update-Checker' },
+        timeout: REQUEST_TIMEOUT,
+      },
+      (res) => {
+        let data = '';
 
-      res.on('data', (chunk: Buffer) => {
-        data += chunk.toString();
-      });
+        res.on('data', (chunk: Buffer) => {
+          data += chunk.toString();
+        });
 
-      res.on('end', () => {
-        try {
-          if (res.statusCode !== 200) {
+        res.on('end', () => {
+          try {
+            if (res.statusCode !== 200) {
+              resolve(null);
+              return;
+            }
+
+            const packageData = JSON.parse(data) as { version?: string };
+            const version = packageData.version || null;
+            resolve(version);
+          } catch {
             resolve(null);
-            return;
           }
-
-          const packageData = JSON.parse(data) as { version?: string };
-          const version = packageData.version || null;
-          resolve(version);
-        } catch {
-          resolve(null);
-        }
-      });
-    });
+        });
+      }
+    );
 
     req.on('error', () => resolve(null));
     req.on('timeout', () => {
@@ -170,7 +178,7 @@ export async function checkForUpdates(
   const now = Date.now();
 
   // Check if we should check for updates
-  if (!force && (now - cache.last_check < CHECK_INTERVAL)) {
+  if (!force && now - cache.last_check < CHECK_INTERVAL) {
     // Use cached result if available
     if (cache.latest_version && compareVersions(cache.latest_version, currentVersion) > 0) {
       // Don't show if user dismissed this version
@@ -206,7 +214,7 @@ export async function checkForUpdates(
     return {
       status: 'check_failed',
       reason: fetchError,
-      message: `Failed to check for updates: ${fetchError.replace(/_/g, ' ')}`
+      message: `Failed to check for updates: ${fetchError.replace(/_/g, ' ')}`,
     };
   }
 
@@ -228,7 +236,9 @@ export async function checkForUpdates(
 export function showUpdateNotification(updateInfo: { current: string; latest: string }): void {
   console.log('');
   console.log(colored('═══════════════════════════════════════════════════════', 'cyan'));
-  console.log(colored(`  Update available: ${updateInfo.current} → ${updateInfo.latest}`, 'yellow'));
+  console.log(
+    colored(`  Update available: ${updateInfo.current} → ${updateInfo.latest}`, 'yellow')
+  );
   console.log(colored('═══════════════════════════════════════════════════════', 'cyan'));
   console.log('');
   console.log(`  Run ${colored('ccs update', 'yellow')} to update`);

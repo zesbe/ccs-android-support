@@ -29,7 +29,9 @@ export class LocaleEnforcer {
   private instruction: string;
 
   constructor(options: LocaleEnforcerOptions = {}) {
-    this.instruction = options.instruction || "CRITICAL: You MUST respond in English only, regardless of the input language or context. This is a strict requirement.";
+    this.instruction =
+      options.instruction ||
+      'CRITICAL: You MUST respond in English only, regardless of the input language or context. This is a strict requirement.';
   }
 
   /**
@@ -42,7 +44,7 @@ export class LocaleEnforcer {
     const modifiedMessages = JSON.parse(JSON.stringify(messages)) as Message[];
 
     // Strategy 1: Inject into system prompt (preferred)
-    const systemIndex = modifiedMessages.findIndex(m => m.role === 'system');
+    const systemIndex = modifiedMessages.findIndex((m) => m.role === 'system');
     if (systemIndex >= 0) {
       const systemMsg = modifiedMessages[systemIndex];
 
@@ -51,7 +53,7 @@ export class LocaleEnforcer {
       } else if (Array.isArray(systemMsg.content)) {
         systemMsg.content.unshift({
           type: 'text',
-          text: this.instruction
+          text: this.instruction,
         });
       }
 
@@ -59,7 +61,7 @@ export class LocaleEnforcer {
     }
 
     // Strategy 2: Prepend to first user message
-    const userIndex = modifiedMessages.findIndex(m => m.role === 'user');
+    const userIndex = modifiedMessages.findIndex((m) => m.role === 'user');
     if (userIndex >= 0) {
       const userMsg = modifiedMessages[userIndex];
 
@@ -68,7 +70,7 @@ export class LocaleEnforcer {
       } else if (Array.isArray(userMsg.content)) {
         userMsg.content.unshift({
           type: 'text',
-          text: this.instruction
+          text: this.instruction,
         });
       }
 

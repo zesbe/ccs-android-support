@@ -95,7 +95,7 @@ class ProfileDetector {
       return {
         type: 'settings',
         name: profileName,
-        settingsPath: config.profiles[profileName]
+        settingsPath: config.profiles[profileName],
       };
     }
 
@@ -106,7 +106,7 @@ class ProfileDetector {
       return {
         type: 'account',
         name: profileName,
-        profile: profiles.profiles[profileName]
+        profile: profiles.profiles[profileName],
       };
     }
 
@@ -133,7 +133,7 @@ class ProfileDetector {
       return {
         type: 'account',
         name: profiles.default,
-        profile: profiles.profiles[profiles.default]
+        profile: profiles.profiles[profiles.default],
       };
     }
 
@@ -144,7 +144,7 @@ class ProfileDetector {
       return {
         type: 'settings',
         name: 'default',
-        settingsPath: config.profiles['default']
+        settingsPath: config.profiles['default'],
       };
     }
 
@@ -152,7 +152,7 @@ class ProfileDetector {
     return {
       type: 'default',
       name: 'default',
-      message: 'No profile configured. Using Claude CLI defaults from ~/.claude/'
+      message: 'No profile configured. Using Claude CLI defaults from ~/.claude/',
     };
   }
 
@@ -168,7 +168,7 @@ class ProfileDetector {
 
     if (settingsProfiles.length > 0) {
       lines.push('Settings-based profiles (GLM, Kimi, etc.):');
-      settingsProfiles.forEach(name => {
+      settingsProfiles.forEach((name) => {
         lines.push(`  - ${name}`);
       });
     }
@@ -179,15 +179,17 @@ class ProfileDetector {
 
     if (accountProfiles.length > 0) {
       lines.push('Account-based profiles:');
-      accountProfiles.forEach(name => {
+      accountProfiles.forEach((name) => {
         const isDefault = name === profiles.default;
         lines.push(`  - ${name}${isDefault ? ' [DEFAULT]' : ''}`);
       });
     }
 
     if (lines.length === 0) {
-      return '  (no profiles configured)\n' +
-        '  Run "ccs auth save <profile>" to create your first account profile.';
+      return (
+        '  (no profiles configured)\n' +
+        '  Run "ccs auth save <profile>" to create your first account profile.'
+      );
     }
 
     return lines.join('\n');
@@ -215,7 +217,7 @@ class ProfileDetector {
     return {
       settings: Object.keys(config.profiles || {}),
       accounts: Object.keys(profiles.profiles || {}),
-      default: profiles.default
+      default: profiles.default,
     };
   }
 }

@@ -6,14 +6,14 @@
  * Session metadata for delegation tracking
  */
 export interface SessionMetadata {
-  id: string;              // Unique session ID
-  profile: string;         // Target profile (glm, kimi)
-  prompt: string;          // Initial prompt
-  workingDir: string;      // CWD at execution time
-  startTime: number;       // Unix timestamp (ms)
-  endTime?: number;        // Unix timestamp (ms)
-  exitCode?: number;       // Process exit code
-  duration?: number;       // Execution duration (seconds)
+  id: string; // Unique session ID
+  profile: string; // Target profile (glm, kimi)
+  prompt: string; // Initial prompt
+  workingDir: string; // CWD at execution time
+  startTime: number; // Unix timestamp (ms)
+  endTime?: number; // Unix timestamp (ms)
+  exitCode?: number; // Process exit code
+  duration?: number; // Execution duration (seconds)
 }
 
 /**
@@ -21,8 +21,8 @@ export interface SessionMetadata {
  */
 export interface DelegationSession {
   metadata: SessionMetadata;
-  turns: number;           // Conversation turns
-  lastPrompt?: string;     // Last user prompt (for :continue)
+  turns: number; // Conversation turns
+  lastPrompt?: string; // Last user prompt (for :continue)
 }
 
 /**
@@ -31,7 +31,7 @@ export interface DelegationSession {
  */
 export interface DelegationSessionsRegistry {
   sessions: Record<string, DelegationSession>; // sessionId → session
-  lastSessionId?: string;  // Most recent session ID
+  lastSessionId?: string; // Most recent session ID
 }
 
 /**
@@ -39,12 +39,12 @@ export interface DelegationSessionsRegistry {
  */
 export interface ExecutionResult {
   exitCode: number;
-  duration: number;        // Seconds
+  duration: number; // Seconds
   workingDir: string;
   sessionId: string;
   profile: string;
-  model?: string;          // Model name from settings
-  cost?: number;           // Estimated cost (if available)
+  model?: string; // Model name from settings
+  cost?: number; // Estimated cost (if available)
   turns: number;
 }
 
@@ -53,8 +53,8 @@ export interface ExecutionResult {
  */
 export interface ToolEvent {
   type: 'tool';
-  tool: string;            // Tool name (Write, Edit, Bash, etc.)
-  args: string;            // Simplified args (file path, command, etc.)
+  tool: string; // Tool name (Write, Edit, Bash, etc.)
+  args: string; // Simplified args (file path, command, etc.)
   timestamp: number;
 }
 

@@ -81,7 +81,7 @@ export class HeadlessExecutor {
       timeout = 600000, // 10 minutes default
       permissionMode = 'acceptEdits',
       resumeSession = false,
-      sessionId = null
+      sessionId = null,
     } = options;
 
     // Validate permission mode
@@ -93,7 +93,9 @@ export class HeadlessExecutor {
     // Detect Claude CLI path
     const claudeCli = this._detectClaudeCli();
     if (!claudeCli) {
-      throw new Error('Claude CLI not found in PATH. Install from: https://docs.claude.com/en/docs/claude-code/installation');
+      throw new Error(
+        'Claude CLI not found in PATH. Install from: https://docs.claude.com/en/docs/claude-code/installation'
+      );
     }
 
     // Get settings path for profile
@@ -101,7 +103,9 @@ export class HeadlessExecutor {
 
     // Validate settings file exists
     if (!fs.existsSync(settingsPath)) {
-      throw new Error(`Settings file not found: ${settingsPath}\nProfile "${profile}" may not be configured.`);
+      throw new Error(
+        `Settings file not found: ${settingsPath}\nProfile "${profile}" may not be configured.`
+      );
     }
 
     // Smart slash command detection and preservation
@@ -122,7 +126,9 @@ export class HeadlessExecutor {
         // Warn about dangerous mode
         if (process.env.CCS_DEBUG) {
           console.warn('[!] WARNING: Using --dangerously-skip-permissions mode');
-          console.warn('[!] This bypasses ALL permission checks. Use only in trusted environments.');
+          console.warn(
+            '[!] This bypasses ALL permission checks. Use only in trusted environments.'
+          );
         }
       } else {
         args.push('--permission-mode', permissionMode);
@@ -136,8 +142,13 @@ export class HeadlessExecutor {
       if (lastSession) {
         args.push('--resume', lastSession.sessionId);
         if (process.env.CCS_DEBUG) {
-          const cost = lastSession.totalCost !== undefined && lastSession.totalCost !== null ? lastSession.totalCost.toFixed(4) : '0.0000';
-          console.error(`[i] Resuming session: ${lastSession.sessionId} (${lastSession.turns} turns, $${cost})`);
+          const cost =
+            lastSession.totalCost !== undefined && lastSession.totalCost !== null
+              ? lastSession.totalCost.toFixed(4)
+              : '0.0000';
+          console.error(
+            `[i] Resuming session: ${lastSession.sessionId} (${lastSession.turns} turns, $${cost})`
+          );
         }
       } else if (sessionId) {
         args.push('--resume', sessionId);
@@ -159,12 +170,12 @@ export class HeadlessExecutor {
 
     if (toolRestrictions.allowedTools.length > 0) {
       args.push('--allowedTools');
-      toolRestrictions.allowedTools.forEach(tool => args.push(tool));
+      toolRestrictions.allowedTools.forEach((tool) => args.push(tool));
     }
 
     if (toolRestrictions.disallowedTools.length > 0) {
       args.push('--disallowedTools');
-      toolRestrictions.disallowedTools.forEach(tool => args.push(tool));
+      toolRestrictions.disallowedTools.forEach((tool) => args.push(tool));
     }
 
     // Note: No max-turns limit - using time-based limits instead (default 10min timeout)
@@ -183,14 +194,15 @@ export class HeadlessExecutor {
 
       // Show initial progress message
       if (showProgress) {
-        const modelName = profile === 'glm' ? 'GLM-4.6' : profile === 'kimi' ? 'Kimi' : profile.toUpperCase();
+        const modelName =
+          profile === 'glm' ? 'GLM-4.6' : profile === 'kimi' ? 'Kimi' : profile.toUpperCase();
         console.error(`[i] Delegating to ${modelName}...`);
       }
 
       const proc = spawn(claudeCli, args, {
         cwd,
         stdio: ['ignore', 'pipe', 'pipe'],
-        timeout
+        timeout,
       });
 
       let stdout = '';
@@ -256,7 +268,7 @@ export class HeadlessExecutor {
 
             // Show real-time tool use with verbose details
             if (showProgress && msg.type === 'assistant') {
-              const toolUses = msg.message?.content?.filter(c => c.type === 'tool_use') || [];
+              const toolUses = msg.message?.content?.filter((c) => c.type === 'tool_use') || [];
 
               for (const tool of toolUses) {
                 process.stderr.write('\r\x1b[K'); // Clear line
@@ -270,9 +282,10 @@ export class HeadlessExecutor {
                   case 'Bash':
                     if (toolInput.command) {
                       // Truncate long commands
-                      const cmd = toolInput.command.length > 80
-                        ? toolInput.command.substring(0, 77) + '...'
-                        : toolInput.command;
+                      const cmd =
+                        toolInput.command.length > 80
+                          ? toolInput.command.substring(0, 77) + '...'
+                          : toolInput.command;
                       verboseMsg += `: ${cmd}`;
                     }
                     break;
@@ -317,9 +330,10 @@ export class HeadlessExecutor {
                     if (toolInput.description) {
                       verboseMsg += `: ${toolInput.description}`;
                     } else if (toolInput.prompt) {
-                      const prompt = toolInput.prompt.length > 60
-                        ? toolInput.prompt.substring(0, 57) + '...'
-                        : toolInput.prompt;
+                      const prompt =
+                        toolInput.prompt.length > 60
+                          ? toolInput.prompt.substring(0, 57) + '...'
+                          : toolInput.prompt;
                       verboseMsg += `: ${prompt}`;
                     }
                     break;
@@ -327,7 +341,9 @@ export class HeadlessExecutor {
                   case 'TodoWrite':
                     if (toolInput.todos && Array.isArray(toolInput.todos)) {
                       // Show in_progress task instead of just count
-                      const inProgressTask = toolInput.todos.find((t: any) => t.status === 'in_progress');
+                      const inProgressTask = toolInput.todos.find(
+                        (t: any) => t.status === 'in_progress'
+                      );
                       if (inProgressTask && inProgressTask.activeForm) {
                         verboseMsg += `: ${inProgressTask.activeForm}`;
                       } else {
@@ -366,7 +382,9 @@ export class HeadlessExecutor {
           } catch (parseError) {
             // Skip malformed JSON lines (shouldn't happen with stream-json)
             if (process.env.CCS_DEBUG) {
-              console.error(`[!] Failed to parse stream-json line: ${(parseError as Error).message}`);
+              console.error(
+                `[!] Failed to parse stream-json line: ${(parseError as Error).message}`
+              );
             }
           }
         }
@@ -416,12 +434,12 @@ export class HeadlessExecutor {
           profile,
           duration,
           timedOut: false,
-          success: (exitCode === 0) && !timedOut,
-          messages // Include all stream-json messages
+          success: exitCode === 0 && !timedOut,
+          messages, // Include all stream-json messages
         };
 
         // Extract metadata from final 'result' message in stream-json
-        const resultMessage = messages.find(m => m.type === 'result');
+        const resultMessage = messages.find((m) => m.type === 'result');
         if (resultMessage) {
           // Add parsed fields from result message
           result.sessionId = resultMessage.session_id || undefined;
@@ -449,19 +467,20 @@ export class HeadlessExecutor {
           if (resumeSession || sessionId) {
             // Update existing session
             sessionMgr.updateSession(profile, result.sessionId, {
-              totalCost: result.totalCost
+              totalCost: result.totalCost,
             });
           } else {
             // Store new session
             sessionMgr.storeSession(profile, {
               sessionId: result.sessionId,
               totalCost: result.totalCost,
-              cwd: result.cwd
+              cwd: result.cwd,
             });
           }
 
           // Cleanup expired sessions periodically
-          if (Math.random() < 0.1) { // 10% chance
+          if (Math.random() < 0.1) {
+            // 10% chance
             sessionMgr.cleanupExpired();
           }
         }
@@ -490,7 +509,9 @@ export class HeadlessExecutor {
             }
 
             if (process.env.CCS_DEBUG) {
-              console.error(`[!] Timeout reached after ${timeout}ms, sending SIGTERM for graceful shutdown...`);
+              console.error(
+                `[!] Timeout reached after ${timeout}ms, sending SIGTERM for graceful shutdown...`
+              );
             }
 
             // Send SIGTERM for graceful shutdown
@@ -523,9 +544,7 @@ export class HeadlessExecutor {
   private static _validatePermissionMode(mode: string): void {
     const VALID_MODES = ['default', 'plan', 'acceptEdits', 'bypassPermissions'];
     if (!VALID_MODES.includes(mode)) {
-      throw new Error(
-        `Invalid permission mode: "${mode}". Valid modes: ${VALID_MODES.join(', ')}`
-      );
+      throw new Error(`Invalid permission mode: "${mode}". Valid modes: ${VALID_MODES.join(', ')}`);
     }
   }
 
@@ -587,7 +606,9 @@ export class HeadlessExecutor {
         lastError = error as Error;
 
         if (attempt < maxRetries) {
-          console.error(`[!] Attempt ${attempt + 1} errored: ${(error as Error).message}, retrying...`);
+          console.error(
+            `[!] Attempt ${attempt + 1} errored: ${(error as Error).message}, retrying...`
+          );
           await this._sleep(1000 * (attempt + 1));
         }
       }
@@ -604,7 +625,7 @@ export class HeadlessExecutor {
    * @private
    */
   private static _sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**
@@ -659,7 +680,7 @@ export class HeadlessExecutor {
   static async testProfile(profile: string): Promise<boolean> {
     try {
       const result = await this.execute(profile, 'Say "test successful"', {
-        timeout: 10000
+        timeout: 10000,
       });
       return result.success;
     } catch (error) {

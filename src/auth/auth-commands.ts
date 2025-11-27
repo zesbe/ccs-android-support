@@ -71,21 +71,43 @@ class AuthCommands {
     console.log(`  ${colored('default <profile>', 'yellow')}      Set default profile`);
     console.log('');
     console.log(colored('Examples:', 'cyan'));
-    console.log(`  ${colored('ccs auth create work', 'yellow')}                     # Create & login to work profile`);
-    console.log(`  ${colored('ccs auth default work', 'yellow')}                    # Set work as default`);
-    console.log(`  ${colored('ccs auth list', 'yellow')}                            # List all profiles`);
-    console.log(`  ${colored('ccs work "review code"', 'yellow')}                   # Use work profile`);
-    console.log(`  ${colored('ccs "review code"', 'yellow')}                        # Use default profile`);
+    console.log(
+      `  ${colored('ccs auth create work', 'yellow')}                     # Create & login to work profile`
+    );
+    console.log(
+      `  ${colored('ccs auth default work', 'yellow')}                    # Set work as default`
+    );
+    console.log(
+      `  ${colored('ccs auth list', 'yellow')}                            # List all profiles`
+    );
+    console.log(
+      `  ${colored('ccs work "review code"', 'yellow')}                   # Use work profile`
+    );
+    console.log(
+      `  ${colored('ccs "review code"', 'yellow')}                        # Use default profile`
+    );
     console.log('');
     console.log(colored('Options:', 'cyan'));
-    console.log(`  ${colored('--force', 'yellow')}                   Allow overwriting existing profile (create)`);
-    console.log(`  ${colored('--yes, -y', 'yellow')}                 Skip confirmation prompts (remove)`);
-    console.log(`  ${colored('--json', 'yellow')}                    Output in JSON format (list, show)`);
-    console.log(`  ${colored('--verbose', 'yellow')}                 Show additional details (list)`);
+    console.log(
+      `  ${colored('--force', 'yellow')}                   Allow overwriting existing profile (create)`
+    );
+    console.log(
+      `  ${colored('--yes, -y', 'yellow')}                 Skip confirmation prompts (remove)`
+    );
+    console.log(
+      `  ${colored('--json', 'yellow')}                    Output in JSON format (list, show)`
+    );
+    console.log(
+      `  ${colored('--verbose', 'yellow')}                 Show additional details (list)`
+    );
     console.log('');
     console.log(colored('Note:', 'cyan'));
-    console.log(`  By default, ${colored('ccs', 'yellow')} uses Claude CLI defaults from ~/.claude/`);
-    console.log(`  Use ${colored('ccs auth default <profile>', 'yellow')} to change the default profile.`);
+    console.log(
+      `  By default, ${colored('ccs', 'yellow')} uses Claude CLI defaults from ~/.claude/`
+    );
+    console.log(
+      `  Use ${colored('ccs auth default <profile>', 'yellow')} to change the default profile.`
+    );
     console.log('');
   }
 
@@ -93,13 +115,13 @@ class AuthCommands {
    * Parse command arguments
    */
   private parseArgs(args: string[]): AuthCommandArgs {
-    const profileName = args.find(arg => !arg.startsWith('--'));
+    const profileName = args.find((arg) => !arg.startsWith('--'));
     return {
       profileName,
       force: args.includes('--force'),
       verbose: args.includes('--verbose'),
       json: args.includes('--json'),
-      yes: args.includes('--yes') || args.includes('-y')
+      yes: args.includes('--yes') || args.includes('-y'),
     };
   }
 
@@ -134,11 +156,11 @@ class AuthCommands {
       // Create/update profile entry
       if (this.registry.hasProfile(profileName)) {
         this.registry.updateProfile(profileName, {
-          type: 'account'
+          type: 'account',
         });
       } else {
         this.registry.createProfile(profileName, {
-          type: 'account'
+          type: 'account',
         });
       }
 
@@ -161,7 +183,7 @@ class AuthCommands {
       // Execute Claude in isolated instance (will auto-prompt for login if no credentials)
       const child: ChildProcess = spawn(claudeCli, [], {
         stdio: 'inherit',
-        env: { ...process.env, CLAUDE_CONFIG_DIR: instancePath }
+        env: { ...process.env, CLAUDE_CONFIG_DIR: instancePath },
       });
 
       child.on('exit', (code: number | null) => {
@@ -173,7 +195,9 @@ class AuthCommands {
           console.log(`  Instance: ${instancePath}`);
           console.log('');
           console.log('Usage:');
-          console.log(`  ${colored(`ccs ${profileName} "your prompt here"`, 'yellow')}        # Use this specific profile`);
+          console.log(
+            `  ${colored(`ccs ${profileName} "your prompt here"`, 'yellow')}        # Use this specific profile`
+          );
           console.log('');
           console.log('To set as default (so you can use just "ccs"):');
           console.log(`  ${colored(`ccs auth default ${profileName}`, 'yellow')}`);
@@ -194,7 +218,6 @@ class AuthCommands {
         console.error(`[X] Failed to execute Claude CLI: ${err.message}`);
         process.exit(1);
       });
-
     } catch (error) {
       console.error(`[X] Failed to create profile: ${(error as Error).message}`);
       process.exit(1);
@@ -216,7 +239,7 @@ class AuthCommands {
       if (json) {
         const output: ListOutput = {
           version: this.version,
-          profiles: profileNames.map(name => {
+          profiles: profileNames.map((name) => {
             const profile = profiles[name];
             const isDefault = name === defaultProfile;
             const instancePath = this.instanceMgr.getInstancePath(name);
@@ -227,9 +250,9 @@ class AuthCommands {
               is_default: isDefault,
               created: profile.created,
               last_used: profile.last_used || null,
-              instance_path: instancePath
+              instance_path: instancePath,
             };
-          })
+          }),
         };
         console.log(JSON.stringify(output, null, 2));
         return;
@@ -240,7 +263,9 @@ class AuthCommands {
         console.log(colored('No account profiles found', 'yellow'));
         console.log('');
         console.log('To create your first profile:');
-        console.log(`  ${colored('ccs auth create <profile>', 'yellow')}  # Create and login to profile`);
+        console.log(
+          `  ${colored('ccs auth create <profile>', 'yellow')}  # Create and login to profile`
+        );
         console.log('');
         console.log('Example:');
         console.log(`  ${colored('ccs auth create work', 'yellow')}`);
@@ -271,12 +296,14 @@ class AuthCommands {
         return a.localeCompare(b);
       });
 
-      sorted.forEach(name => {
+      sorted.forEach((name) => {
         const profile = profiles[name];
         const isDefault = name === defaultProfile;
         const indicator = isDefault ? colored('[*]', 'green') : '[ ]';
 
-        console.log(`${indicator} ${colored(name, 'cyan')}${isDefault ? colored(' (default)', 'green') : ''}`);
+        console.log(
+          `${indicator} ${colored(name, 'cyan')}${isDefault ? colored(' (default)', 'green') : ''}`
+        );
 
         console.log(`    Type: ${profile.type || 'account'}`);
 
@@ -292,7 +319,6 @@ class AuthCommands {
 
       console.log(`Total profiles: ${profileNames.length}`);
       console.log('');
-
     } catch (error) {
       console.error(`[X] Failed to list profiles: ${(error as Error).message}`);
       process.exit(1);
@@ -324,7 +350,7 @@ class AuthCommands {
         const sessionsDir = path.join(instancePath, 'session-env');
         if (fs.existsSync(sessionsDir)) {
           const files = fs.readdirSync(sessionsDir);
-          sessionCount = files.filter(f => f.endsWith('.json')).length;
+          sessionCount = files.filter((f) => f.endsWith('.json')).length;
         }
       } catch (e) {
         // Ignore errors counting sessions
@@ -339,7 +365,7 @@ class AuthCommands {
           created: profile.created,
           last_used: profile.last_used || null,
           instance_path: instancePath,
-          session_count: sessionCount
+          session_count: sessionCount,
         };
         console.log(JSON.stringify(output, null, 2));
         return;
@@ -360,7 +386,6 @@ class AuthCommands {
       }
 
       console.log('');
-
     } catch (error) {
       console.error(`[X] ${(error as Error).message}`);
       process.exit(1);
@@ -394,7 +419,7 @@ class AuthCommands {
         const sessionsDir = path.join(instancePath, 'session-env');
         if (fs.existsSync(sessionsDir)) {
           const files = fs.readdirSync(sessionsDir);
-          sessionCount = files.filter(f => f.endsWith('.json')).length;
+          sessionCount = files.filter((f) => f.endsWith('.json')).length;
         }
       } catch (e) {
         // Ignore errors counting sessions
@@ -408,10 +433,12 @@ class AuthCommands {
       console.log('');
 
       // Interactive confirmation (or --yes flag)
-      const confirmed = yes || await InteractivePrompt.confirm(
-        'Delete this profile?',
-        { default: false } // Default to NO (safe)
-      );
+      const confirmed =
+        yes ||
+        (await InteractivePrompt.confirm(
+          'Delete this profile?',
+          { default: false } // Default to NO (safe)
+        ));
 
       if (!confirmed) {
         console.log('[i] Cancelled');
@@ -427,7 +454,6 @@ class AuthCommands {
       console.log(colored('[OK] Profile removed successfully', 'green'));
       console.log(`    Profile: ${profileName}`);
       console.log('');
-
     } catch (error) {
       console.error(`[X] Failed to remove profile: ${(error as Error).message}`);
       process.exit(1);
@@ -456,7 +482,6 @@ class AuthCommands {
       console.log('Now you can use:');
       console.log(`  ${colored('ccs "your prompt"', 'yellow')}  # Uses ${profileName} profile`);
       console.log('');
-
     } catch (error) {
       console.error(`[X] ${(error as Error).message}`);
       process.exit(1);

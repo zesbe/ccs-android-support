@@ -28,15 +28,15 @@ try {
   ora = oraModule.default || oraModule;
 } catch (e) {
   // ora not available, create fallback spinner that uses console.log
-  ora = function(text: string): Spinner {
+  ora = function (text: string): Spinner {
     return {
       start: () => ({
         succeed: (msg?: string) => console.log(msg || `[OK] ${text}`),
         fail: (msg?: string) => console.log(msg || `[X] ${text}`),
         warn: (msg?: string) => console.log(msg || `[!] ${text}`),
         info: (msg?: string) => console.log(msg || `[i] ${text}`),
-        text: ''
-      })
+        text: '',
+      }),
     };
   };
 }
@@ -71,7 +71,13 @@ class HealthCheck {
   public errors: HealthIssue[] = [];
   public details: Record<string, HealthCheckDetails> = {};
 
-  addCheck(name: string, status: 'success' | 'error' | 'warning', message = '', fix: string | undefined = undefined, details: HealthCheckDetails | undefined = undefined): void {
+  addCheck(
+    name: string,
+    status: 'success' | 'error' | 'warning',
+    message = '',
+    fix: string | undefined = undefined,
+    details: HealthCheckDetails | undefined = undefined
+  ): void {
     this.checks.push({ name, status, message, fix });
 
     if (status === 'error') this.errors.push({ name, message, fix });
@@ -179,12 +185,12 @@ class Doctor {
       const result = await new Promise<string>((resolve, reject) => {
         const child = spawn(claudeCli, ['--version'], {
           stdio: 'pipe',
-          timeout: 5000
+          timeout: 5000,
         });
 
         let output = '';
-        child.stdout?.on('data', (data: Buffer) => output += data);
-        child.stderr?.on('data', (data: Buffer) => output += data);
+        child.stdout?.on('data', (data: Buffer) => (output += data));
+        child.stderr?.on('data', (data: Buffer) => (output += data));
 
         child.on('close', (code: number | null) => {
           if (code === 0) resolve(output);
@@ -198,13 +204,17 @@ class Doctor {
       const versionMatch = result.match(/(\d+\.\d+\.\d+)/);
       const version = versionMatch ? versionMatch[1] : 'unknown';
 
-      spinner.succeed(`  ${'Claude CLI'.padEnd(26)}${colored('[OK]', 'green')}  ${claudeCli} (v${version})`);
+      spinner.succeed(
+        `  ${'Claude CLI'.padEnd(26)}${colored('[OK]', 'green')}  ${claudeCli} (v${version})`
+      );
       this.results.addCheck('Claude CLI', 'success', `Found: ${claudeCli}`, undefined, {
         status: 'OK',
-        info: `v${version} (${claudeCli})`
+        info: `v${version} (${claudeCli})`,
       });
     } catch (err) {
-      spinner.fail(`  ${'Claude CLI'.padEnd(26)}${colored('[X]', 'red')}  Not found or not working`);
+      spinner.fail(
+        `  ${'Claude CLI'.padEnd(26)}${colored('[X]', 'red')}  Not found or not working`
+      );
       this.results.addCheck(
         'Claude CLI',
         'error',
@@ -225,7 +235,7 @@ class Doctor {
       spinner.succeed(`  ${'CCS Directory'.padEnd(26)}${colored('[OK]', 'green')}  ~/.ccs/`);
       this.results.addCheck('CCS Directory', 'success', undefined, undefined, {
         status: 'OK',
-        info: '~/.ccs/'
+        info: '~/.ccs/',
       });
     } else {
       spinner.fail(`  ${'CCS Directory'.padEnd(26)}${colored('[X]', 'red')}  Not found`);
@@ -245,8 +255,18 @@ class Doctor {
   private checkConfigFiles(): void {
     const files = [
       { path: path.join(this.ccsDir, 'config.json'), name: 'config.json', key: 'config.json' },
-      { path: path.join(this.ccsDir, 'glm.settings.json'), name: 'glm.settings.json', key: 'GLM Settings', profile: 'glm' },
-      { path: path.join(this.ccsDir, 'kimi.settings.json'), name: 'kimi.settings.json', key: 'Kimi Settings', profile: 'kimi' }
+      {
+        path: path.join(this.ccsDir, 'glm.settings.json'),
+        name: 'glm.settings.json',
+        key: 'GLM Settings',
+        profile: 'glm',
+      },
+      {
+        path: path.join(this.ccsDir, 'kimi.settings.json'),
+        name: 'kimi.settings.json',
+        key: 'Kimi Settings',
+        profile: 'kimi',
+      },
     ];
 
     const { DelegationValidator } = require('../utils/delegation-validator');
@@ -299,10 +319,16 @@ class Doctor {
           spinner.succeed(`  ${file.name.padEnd(26)}${statusIcon}  ${info}`);
         }
 
-        this.results.addCheck(file.name, status === 'OK' ? 'success' : 'warning', undefined, undefined, {
-          status: status,
-          info: info
-        });
+        this.results.addCheck(
+          file.name,
+          status === 'OK' ? 'success' : 'warning',
+          undefined,
+          undefined,
+          {
+            status: status,
+            info: info,
+          }
+        );
       } catch (e) {
         spinner.fail(`  ${file.name.padEnd(26)}${colored('[X]', 'red')}  Invalid JSON`);
         this.results.addCheck(
@@ -324,7 +350,9 @@ class Doctor {
     const settingsPath = path.join(this.claudeDir, 'settings.json');
 
     if (!fs.existsSync(settingsPath)) {
-      spinner.warn(`  ${'~/.claude/settings.json'.padEnd(26)}${colored('[!]', 'yellow')}  Not found`);
+      spinner.warn(
+        `  ${'~/.claude/settings.json'.padEnd(26)}${colored('[!]', 'yellow')}  Not found`
+      );
       this.results.addCheck(
         'Claude Settings',
         'warning',
@@ -341,7 +369,9 @@ class Doctor {
       spinner.succeed(`  ${'~/.claude/settings.json'.padEnd(26)}${colored('[OK]', 'green')}`);
       this.results.addCheck('Claude Settings', 'success');
     } catch (e) {
-      spinner.warn(`  ${'~/.claude/settings.json'.padEnd(26)}${colored('[!]', 'yellow')}  Invalid JSON`);
+      spinner.warn(
+        `  ${'~/.claude/settings.json'.padEnd(26)}${colored('[!]', 'yellow')}  Invalid JSON`
+      );
       this.results.addCheck(
         'Claude Settings',
         'warning',
@@ -381,16 +411,24 @@ class Doctor {
       const profileCount = Object.keys(config.profiles).length;
       const profileNames = Object.keys(config.profiles).join(', ');
 
-      spinner.succeed(`  ${'Profiles'.padEnd(26)}${colored('[OK]', 'green')}  ${profileCount} configured (${profileNames})`);
-      this.results.addCheck('Profiles', 'success', `${profileCount} profiles configured`, undefined, {
-        status: 'OK',
-        info: `${profileCount} configured (${profileNames.length > 30 ? profileNames.substring(0, 27) + '...' : profileNames})`
-      });
+      spinner.succeed(
+        `  ${'Profiles'.padEnd(26)}${colored('[OK]', 'green')}  ${profileCount} configured (${profileNames})`
+      );
+      this.results.addCheck(
+        'Profiles',
+        'success',
+        `${profileCount} profiles configured`,
+        undefined,
+        {
+          status: 'OK',
+          info: `${profileCount} configured (${profileNames.length > 30 ? profileNames.substring(0, 27) + '...' : profileNames})`,
+        }
+      );
     } catch (e) {
       spinner.fail(`  ${'Profiles'.padEnd(26)}${colored('[X]', 'red')}  ${(e as Error).message}`);
       this.results.addCheck('Profiles', 'error', (e as Error).message, undefined, {
         status: 'ERROR',
-        info: (e as Error).message
+        info: (e as Error).message,
       });
     }
   }
@@ -408,7 +446,7 @@ class Doctor {
       return;
     }
 
-    const instances = fs.readdirSync(instancesDir).filter(name => {
+    const instances = fs.readdirSync(instancesDir).filter((name) => {
       return fs.statSync(path.join(instancesDir, name)).isDirectory();
     });
 
@@ -418,7 +456,9 @@ class Doctor {
       return;
     }
 
-    spinner.succeed(`  ${'Instances'.padEnd(26)}${colored('[OK]', 'green')}  ${instances.length} account profiles`);
+    spinner.succeed(
+      `  ${'Instances'.padEnd(26)}${colored('[OK]', 'green')}  ${instances.length} account profiles`
+    );
     this.results.addCheck('Instances', 'success', `${instances.length} account profiles`);
   }
 
@@ -468,7 +508,9 @@ class Doctor {
       return;
     }
 
-    spinner.succeed(`  ${'Delegation'.padEnd(26)}${colored('[OK]', 'green')}  ${readyProfiles.length} profiles ready (${readyProfiles.join(', ')})`);
+    spinner.succeed(
+      `  ${'Delegation'.padEnd(26)}${colored('[OK]', 'green')}  ${readyProfiles.length} profiles ready (${readyProfiles.join(', ')})`
+    );
     this.results.addCheck(
       'Delegation',
       'success',
@@ -488,13 +530,17 @@ class Doctor {
     try {
       fs.writeFileSync(testFile, 'test', 'utf8');
       fs.unlinkSync(testFile);
-      spinner.succeed(`  ${'Permissions'.padEnd(26)}${colored('[OK]', 'green')}  Write access verified`);
+      spinner.succeed(
+        `  ${'Permissions'.padEnd(26)}${colored('[OK]', 'green')}  Write access verified`
+      );
       this.results.addCheck('Permissions', 'success', undefined, undefined, {
         status: 'OK',
-        info: 'Write access verified'
+        info: 'Write access verified',
       });
     } catch (e) {
-      spinner.fail(`  ${'Permissions'.padEnd(26)}${colored('[X]', 'red')}  Cannot write to ~/.ccs/`);
+      spinner.fail(
+        `  ${'Permissions'.padEnd(26)}${colored('[X]', 'red')}  Cannot write to ~/.ccs/`
+      );
       this.results.addCheck(
         'Permissions',
         'error',
@@ -518,13 +564,23 @@ class Doctor {
 
       if (health.healthy) {
         const itemCount = manager.ccsItems.length;
-        spinner.succeed(`  ${'CCS Symlinks'.padEnd(26)}${colored('[OK]', 'green')}  ${itemCount}/${itemCount} items linked`);
-        this.results.addCheck('CCS Symlinks', 'success', 'All CCS items properly symlinked', undefined, {
-          status: 'OK',
-          info: `${itemCount}/${itemCount} items synced`
-        });
+        spinner.succeed(
+          `  ${'CCS Symlinks'.padEnd(26)}${colored('[OK]', 'green')}  ${itemCount}/${itemCount} items linked`
+        );
+        this.results.addCheck(
+          'CCS Symlinks',
+          'success',
+          'All CCS items properly symlinked',
+          undefined,
+          {
+            status: 'OK',
+            info: `${itemCount}/${itemCount} items synced`,
+          }
+        );
       } else {
-        spinner.warn(`  ${'CCS Symlinks'.padEnd(26)}${colored('[!]', 'yellow')}  ${health.issues.length} issues found`);
+        spinner.warn(
+          `  ${'CCS Symlinks'.padEnd(26)}${colored('[!]', 'yellow')}  ${health.issues.length} issues found`
+        );
         this.results.addCheck(
           'CCS Symlinks',
           'warning',
@@ -558,7 +614,9 @@ class Doctor {
 
       // Check shared settings exists and points to ~/.claude/
       if (!fs.existsSync(sharedSettings)) {
-        spinner.warn(`  ${'settings.json (shared)'.padEnd(26)}${colored('[!]', 'yellow')}  Not found`);
+        spinner.warn(
+          `  ${'settings.json (shared)'.padEnd(26)}${colored('[!]', 'yellow')}  Not found`
+        );
         this.results.addCheck(
           'Settings Symlinks',
           'warning',
@@ -570,7 +628,9 @@ class Doctor {
 
       const sharedStats = fs.lstatSync(sharedSettings);
       if (!sharedStats.isSymbolicLink()) {
-        spinner.warn(`  ${'settings.json (shared)'.padEnd(26)}${colored('[!]', 'yellow')}  Not a symlink`);
+        spinner.warn(
+          `  ${'settings.json (shared)'.padEnd(26)}${colored('[!]', 'yellow')}  Not a symlink`
+        );
         this.results.addCheck(
           'Settings Symlinks',
           'warning',
@@ -584,7 +644,9 @@ class Doctor {
       const resolvedShared = path.resolve(path.dirname(sharedSettings), sharedTarget);
 
       if (resolvedShared !== claudeSettings) {
-        spinner.warn(`  ${'settings.json (shared)'.padEnd(26)}${colored('[!]', 'yellow')}  Wrong target`);
+        spinner.warn(
+          `  ${'settings.json (shared)'.padEnd(26)}${colored('[!]', 'yellow')}  Wrong target`
+        );
         this.results.addCheck(
           'Settings Symlinks',
           'warning',
@@ -597,15 +659,17 @@ class Doctor {
       // Check each instance
       const instancesDir = path.join(this.ccsDir, 'instances');
       if (!fs.existsSync(instancesDir)) {
-        spinner.succeed(`  ${'settings.json'.padEnd(26)}${colored('[OK]', 'green')}  Shared symlink valid`);
+        spinner.succeed(
+          `  ${'settings.json'.padEnd(26)}${colored('[OK]', 'green')}  Shared symlink valid`
+        );
         this.results.addCheck('Settings Symlinks', 'success', 'Shared symlink valid', undefined, {
           status: 'OK',
-          info: 'Shared symlink valid'
+          info: 'Shared symlink valid',
         });
         return;
       }
 
-      const instances = fs.readdirSync(instancesDir).filter(name => {
+      const instances = fs.readdirSync(instancesDir).filter((name) => {
         return fs.statSync(path.join(instancesDir, name)).isDirectory();
       });
 
@@ -638,7 +702,9 @@ class Doctor {
       }
 
       if (broken > 0) {
-        spinner.warn(`  ${'settings.json'.padEnd(26)}${colored('[!]', 'yellow')}  ${broken} broken instance(s)`);
+        spinner.warn(
+          `  ${'settings.json'.padEnd(26)}${colored('[!]', 'yellow')}  ${broken} broken instance(s)`
+        );
         this.results.addCheck(
           'Settings Symlinks',
           'warning',
@@ -647,13 +713,20 @@ class Doctor {
           { status: 'WARN', info: `${broken} broken instance(s)` }
         );
       } else {
-        spinner.succeed(`  ${'settings.json'.padEnd(26)}${colored('[OK]', 'green')}  ${instances.length} instance(s) valid`);
-        this.results.addCheck('Settings Symlinks', 'success', 'All instance symlinks valid', undefined, {
-          status: 'OK',
-          info: `${instances.length} instance(s) valid`
-        });
+        spinner.succeed(
+          `  ${'settings.json'.padEnd(26)}${colored('[OK]', 'green')}  ${instances.length} instance(s) valid`
+        );
+        this.results.addCheck(
+          'Settings Symlinks',
+          'success',
+          'All instance symlinks valid',
+          undefined,
+          {
+            status: 'OK',
+            info: `${instances.length} instance(s) valid`,
+          }
+        );
       }
-
     } catch (err) {
       spinner.warn(`  ${'settings.json'.padEnd(26)}${colored('[!]', 'yellow')}  Check failed`);
       this.results.addCheck(
@@ -687,21 +760,29 @@ class Doctor {
       colWidths: [20, 10, 35],
       wordWrap: true,
       chars: {
-        'top': '═', 'top-mid': '╤', 'top-left': '╔', 'top-right': '╗',
-        'bottom': '═', 'bottom-mid': '╧', 'bottom-left': '╚', 'bottom-right': '╝',
-        'left': '║', 'left-mid': '╟', 'mid': '─', 'mid-mid': '┼',
-        'right': '║', 'right-mid': '╢', 'middle': '│'
-      }
+        top: '═',
+        'top-mid': '╤',
+        'top-left': '╔',
+        'top-right': '╗',
+        bottom: '═',
+        'bottom-mid': '╧',
+        'bottom-left': '╚',
+        'bottom-right': '╝',
+        left: '║',
+        'left-mid': '╟',
+        mid: '─',
+        'mid-mid': '┼',
+        right: '║',
+        'right-mid': '╢',
+        middle: '│',
+      },
     });
 
     // Populate table with collected details
     for (const [component, detail] of Object.entries(this.results.details)) {
-      const statusColor = detail.status === 'OK' ? 'green' : detail.status === 'ERROR' ? 'red' : 'yellow';
-      table.push([
-        component,
-        colored(detail.status, statusColor),
-        detail.info || ''
-      ]);
+      const statusColor =
+        detail.status === 'OK' ? 'green' : detail.status === 'ERROR' ? 'red' : 'yellow';
+      table.push([component, colored(detail.status, statusColor), detail.info || '']);
     }
 
     console.log(table.toString());
@@ -710,7 +791,7 @@ class Doctor {
     // Show errors and warnings if present
     if (this.results.hasErrors()) {
       console.log(colored('Errors:', 'red'));
-      this.results.errors.forEach(err => {
+      this.results.errors.forEach((err) => {
         console.log(`  [X] ${err.name}: ${err.message}`);
         if (err.fix) {
           console.log(`      Fix: ${err.fix}`);
@@ -721,7 +802,7 @@ class Doctor {
 
     if (this.results.hasWarnings()) {
       console.log(colored('Warnings:', 'yellow'));
-      this.results.warnings.forEach(warn => {
+      this.results.warnings.forEach((warn) => {
         console.log(`  [!] ${warn.name}: ${warn.message}`);
         if (warn.fix) {
           console.log(`      Fix: ${warn.fix}`);
@@ -747,16 +828,20 @@ class Doctor {
    * Generate JSON report
    */
   generateJsonReport(): string {
-    return JSON.stringify({
-      timestamp: new Date().toISOString(),
-      platform: process.platform,
-      nodeVersion: process.version,
-      ccsVersion: packageJson.version,
-      checks: this.results.checks,
-      errors: this.results.errors,
-      warnings: this.results.warnings,
-      healthy: this.results.isHealthy()
-    }, null, 2);
+    return JSON.stringify(
+      {
+        timestamp: new Date().toISOString(),
+        platform: process.platform,
+        nodeVersion: process.version,
+        ccsVersion: packageJson.version,
+        checks: this.results.checks,
+        errors: this.results.errors,
+        warnings: this.results.warnings,
+        healthy: this.results.isHealthy(),
+      },
+      null,
+      2
+    );
   }
 
   /**

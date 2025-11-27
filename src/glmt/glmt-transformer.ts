@@ -203,7 +203,7 @@ export class GlmtTransformer {
   private verbose: boolean;
   private debugLog: boolean;
   private debugMode: boolean;
-  debugLogDir: string;  // public for external access
+  debugLogDir: string; // public for external access
   private modelMaxTokens: Record<string, number>;
   private localeEnforcer: LocaleEnforcer;
   private reasoningEnforcer: ReasoningEnforcer;
@@ -221,7 +221,7 @@ export class GlmtTransformer {
     this.modelMaxTokens = {
       'GLM-4.6': 128000,
       'GLM-4.5': 96000,
-      'GLM-4.5-air': 16000
+      'GLM-4.5-air': 16000,
     };
 
     // Initialize locale enforcer (always enforce English)
@@ -229,7 +229,7 @@ export class GlmtTransformer {
 
     // Initialize reasoning enforcer (enabled by default for all GLMT usage)
     this.reasoningEnforcer = new ReasoningEnforcer({
-      enabled: config.explicitReasoning ?? true
+      enabled: config.explicitReasoning ?? true,
     });
   }
 
@@ -242,9 +242,7 @@ export class GlmtTransformer {
 
     try {
       // 1. Extract thinking control from messages (tags like <Thinking:On|Off>)
-      const thinkingConfig = this.extractThinkingControl(
-        anthropicRequest.messages || []
-      );
+      const thinkingConfig = this.extractThinkingControl(anthropicRequest.messages || []);
       const hasControlTags = this.hasThinkingTags(anthropicRequest.messages || []);
 
       // 2. Detect "think" keywords in user prompts (Anthropic-style)
@@ -252,7 +250,9 @@ export class GlmtTransformer {
       if (keywordConfig && !anthropicRequest.thinking && !hasControlTags) {
         thinkingConfig.thinking = keywordConfig.thinking;
         thinkingConfig.effort = keywordConfig.effort;
-        this.log(`Detected think keyword: ${keywordConfig.keyword}, effort=${keywordConfig.effort}`);
+        this.log(
+          `Detected think keyword: ${keywordConfig.keyword}, effort=${keywordConfig.effort}`
+        );
       }
 
       // 3. Check anthropicRequest.thinking parameter (takes precedence)
@@ -275,12 +275,16 @@ export class GlmtTransformer {
 
       // 4. Inject locale instruction before sanitization
       const messagesWithLocale = this.localeEnforcer.injectInstruction(
-        (anthropicRequest.messages || []) as Parameters<typeof this.localeEnforcer.injectInstruction>[0]
+        (anthropicRequest.messages || []) as Parameters<
+          typeof this.localeEnforcer.injectInstruction
+        >[0]
       ) as unknown as Message[];
 
       // 4.5. Inject reasoning instruction (if enabled or thinking requested)
       const messagesWithReasoning = this.reasoningEnforcer.injectInstruction(
-        messagesWithLocale as unknown as Parameters<typeof this.reasoningEnforcer.injectInstruction>[0],
+        messagesWithLocale as unknown as Parameters<
+          typeof this.reasoningEnforcer.injectInstruction
+        >[0],
         thinkingConfig
       ) as unknown as Message[];
 
@@ -289,14 +293,14 @@ export class GlmtTransformer {
         model: glmModel,
         messages: this.sanitizeMessages(messagesWithReasoning),
         max_tokens: this.getMaxTokens(glmModel),
-        stream: anthropicRequest.stream ?? false
+        stream: anthropicRequest.stream ?? false,
       };
 
       // 5.5. Transform tools parameter if present
       if (anthropicRequest.tools && anthropicRequest.tools.length > 0) {
         openaiRequest.tools = this.transformTools(anthropicRequest.tools);
         // Always use "auto" as Z.AI doesn't support other modes
-        openaiRequest.tool_choice = "auto";
+        openaiRequest.tool_choice = 'auto';
         this.log(`Transformed ${anthropicRequest.tools.length} tools for OpenAI format`);
       }
 
@@ -327,7 +331,7 @@ export class GlmtTransformer {
       return {
         openaiRequest: anthropicRequest,
         thinkingConfig: { thinking: false, effort: 'medium' },
-        error: err.message
+        error: err.message,
       };
     }
   }
@@ -335,7 +339,10 @@ export class GlmtTransformer {
   /**
    * Transform OpenAI response to Anthropic format
    */
-  transformResponse(openaiResponse: OpenAIResponse, _thinkingConfig: ThinkingConfig = { thinking: false, effort: 'medium' }): AnthropicResponse {
+  transformResponse(
+    openaiResponse: OpenAIResponse,
+    _thinkingConfig: ThinkingConfig = { thinking: false, effort: 'medium' }
+  ): AnthropicResponse {
     // Log original response
     this.writeDebugLog('response-openai', openaiResponse);
 
@@ -352,10 +359,7 @@ export class GlmtTransformer {
       if (message.reasoning_content) {
         const length = message.reasoning_content.length;
         const lineCount = message.reasoning_content.split('\n').length;
-        const preview = message.reasoning_content
-          .substring(0, 100)
-          .replace(/\n/g, ' ')
-          .trim();
+        const preview = message.reasoning_content.substring(0, 100).replace(/\n/g, ' ').trim();
 
         this.log(`Detected reasoning_content:`);
         this.log(`  Length: ${length} characters`);
@@ -365,7 +369,7 @@ export class GlmtTransformer {
         content.push({
           type: 'thinking',
           thinking: message.reasoning_content,
-          signature: this.generateThinkingSignature(message.reasoning_content)
+          signature: this.generateThinkingSignature(message.reasoning_content),
         });
       } else {
         this.log('No reasoning_content in OpenAI response');
@@ -376,13 +380,13 @@ export class GlmtTransformer {
       if (message.content) {
         content.push({
           type: 'text',
-          text: message.content
+          text: message.content,
         });
       }
 
       // Handle tool_calls if present
       if (message.tool_calls && message.tool_calls.length > 0) {
-        message.tool_calls.forEach(toolCall => {
+        message.tool_calls.forEach((toolCall) => {
           let parsedInput: Record<string, unknown>;
           try {
             parsedInput = JSON.parse(toolCall.function.arguments || '{}');
@@ -396,7 +400,7 @@ export class GlmtTransformer {
             type: 'tool_use',
             id: toolCall.id,
             name: toolCall.function.name,
-            input: parsedInput
+            input: parsedInput,
           });
         });
       }
@@ -410,14 +414,16 @@ export class GlmtTransformer {
         stop_reason: this.mapStopReason(choice.finish_reason || 'stop'),
         usage: {
           input_tokens: openaiResponse.usage?.prompt_tokens || 0,
-          output_tokens: openaiResponse.usage?.completion_tokens || 0
-        }
+          output_tokens: openaiResponse.usage?.completion_tokens || 0,
+        },
       };
 
       // Validate transformation in verbose mode
       if (this.verbose) {
         const validation = this.validateTransformation(anthropicResponse);
-        this.log(`Transformation validation: ${validation.passed}/${validation.total} checks passed`);
+        this.log(
+          `Transformation validation: ${validation.passed}/${validation.total} checks passed`
+        );
         if (!validation.valid) {
           this.log(`Failed checks: ${JSON.stringify(validation.checks, null, 2)}`);
         }
@@ -435,13 +441,15 @@ export class GlmtTransformer {
         id: 'msg_error_' + Date.now(),
         type: 'message',
         role: 'assistant',
-        content: [{
-          type: 'text',
-          text: '[Transformation Error] ' + err.message
-        }],
+        content: [
+          {
+            type: 'text',
+            text: '[Transformation Error] ' + err.message,
+          },
+        ],
         model: 'glm-4.6',
         stop_reason: 'end_turn',
-        usage: { input_tokens: 0, output_tokens: 0 }
+        usage: { input_tokens: 0, output_tokens: 0 },
       };
     }
   }
@@ -462,29 +470,31 @@ export class GlmtTransformer {
       // If content is an array, process blocks
       if (Array.isArray(msg.content)) {
         // Separate tool_result blocks from other content
-        const toolResults = msg.content.filter(block => block.type === 'tool_result');
-        const textBlocks = msg.content.filter(block => block.type === 'text');
+        const toolResults = msg.content.filter((block) => block.type === 'tool_result');
+        const textBlocks = msg.content.filter((block) => block.type === 'text');
         // const toolUseBlocks = msg.content.filter(block => block.type === 'tool_use');
 
         // CRITICAL: Tool messages must come BEFORE user text in OpenAI API
         for (const toolResult of toolResults) {
           result.push({
             role: 'tool',
-            content: typeof toolResult.content === 'string'
-              ? toolResult.content
-              : JSON.stringify(toolResult.content)
+            content:
+              typeof toolResult.content === 'string'
+                ? toolResult.content
+                : JSON.stringify(toolResult.content),
           } as Message & { tool_call_id: string });
         }
 
         // Add text content as user/assistant message AFTER tool messages
         if (textBlocks.length > 0) {
-          const textContent = textBlocks.length === 1
-            ? textBlocks[0].text || ''
-            : textBlocks.map(b => b.text || '').join('\n');
+          const textContent =
+            textBlocks.length === 1
+              ? textBlocks[0].text || ''
+              : textBlocks.map((b) => b.text || '').join('\n');
 
           result.push({
             role: msg.role,
-            content: textContent
+            content: textContent,
           });
         }
 
@@ -492,7 +502,7 @@ export class GlmtTransformer {
         if (textBlocks.length === 0 && toolResults.length === 0) {
           result.push({
             role: msg.role,
-            content: ''
+            content: '',
           });
         }
 
@@ -510,13 +520,13 @@ export class GlmtTransformer {
    * Transform Anthropic tools to OpenAI tools format
    */
   private transformTools(anthropicTools: AnthropicTool[]): OpenAITool[] {
-    return anthropicTools.map(tool => ({
+    return anthropicTools.map((tool) => ({
       type: 'function' as const,
       function: {
         name: tool.name,
         description: tool.description,
-        parameters: tool.input_schema || {}
-      }
+        parameters: tool.input_schema || {},
+      },
     }));
   }
 
@@ -543,7 +553,7 @@ export class GlmtTransformer {
   private extractThinkingControl(messages: Message[]): ThinkingConfig {
     const config: ThinkingConfig = {
       thinking: this.defaultThinking,
-      effort: 'medium'
+      effort: 'medium',
     };
 
     // Scan user messages for control tags
@@ -574,34 +584,33 @@ export class GlmtTransformer {
    */
   private generateThinkingSignature(thinking: string): ThinkingSignature {
     // Generate signature hash
-    const hash = crypto.createHash('sha256')
-      .update(thinking)
-      .digest('hex')
-      .substring(0, 16);
+    const hash = crypto.createHash('sha256').update(thinking).digest('hex').substring(0, 16);
 
     return {
       type: 'thinking_signature',
       hash: hash,
       length: thinking.length,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
   }
 
   /**
    * Detect Anthropic-style "think" keywords in user prompts
    */
-  private detectThinkKeywords(messages: Message[]): { thinking: boolean; effort: string; keyword: string } | null {
+  private detectThinkKeywords(
+    messages: Message[]
+  ): { thinking: boolean; effort: string; keyword: string } | null {
     if (!messages || messages.length === 0) return null;
 
     // Extract text from user messages
     const text = messages
-      .filter(m => m.role === 'user')
-      .map(m => {
+      .filter((m) => m.role === 'user')
+      .map((m) => {
         if (typeof m.content === 'string') return m.content;
         if (Array.isArray(m.content)) {
           return m.content
-            .filter(block => block.type === 'text')
-            .map(block => block.text || '')
+            .filter((block) => block.type === 'text')
+            .map((block) => block.text || '')
             .join(' ');
         }
         return '';
@@ -628,7 +637,10 @@ export class GlmtTransformer {
   /**
    * Inject reasoning parameters into OpenAI request
    */
-  private injectReasoningParams(openaiRequest: OpenAIRequest, thinkingConfig: ThinkingConfig): void {
+  private injectReasoningParams(
+    openaiRequest: OpenAIRequest,
+    thinkingConfig: ThinkingConfig
+  ): void {
     // Always enable sampling for temperature/top_p to work
     openaiRequest.do_sample = true;
 
@@ -659,10 +671,10 @@ export class GlmtTransformer {
    */
   private mapStopReason(openaiReason: string): string {
     const mapping: Record<string, string> = {
-      'stop': 'end_turn',
-      'length': 'max_tokens',
-      'tool_calls': 'tool_use',
-      'content_filter': 'stop_sequence'
+      stop: 'end_turn',
+      length: 'max_tokens',
+      tool_calls: 'tool_use',
+      content_filter: 'stop_sequence',
     };
     return mapping[openaiReason] || 'end_turn';
   }
@@ -699,10 +711,11 @@ export class GlmtTransformer {
   private validateTransformation(anthropicResponse: AnthropicResponse): ValidationResult {
     const checks: Record<string, boolean> = {
       hasContent: Boolean(anthropicResponse.content && anthropicResponse.content.length > 0),
-      hasThinking: anthropicResponse.content?.some(block => block.type === 'thinking') || false,
-      hasText: anthropicResponse.content?.some(block => block.type === 'text') || false,
-      validStructure: anthropicResponse.type === 'message' && anthropicResponse.role === 'assistant',
-      hasUsage: Boolean(anthropicResponse.usage)
+      hasThinking: anthropicResponse.content?.some((block) => block.type === 'thinking') || false,
+      hasText: anthropicResponse.content?.some((block) => block.type === 'text') || false,
+      validStructure:
+        anthropicResponse.type === 'message' && anthropicResponse.role === 'assistant',
+      hasUsage: Boolean(anthropicResponse.usage),
     };
 
     const passed = Object.values(checks).filter(Boolean).length;
@@ -767,7 +780,9 @@ export class GlmtTransformer {
 
       if (this.debugMode) {
         console.error(`[GLMT-DEBUG] Reasoning delta: ${delta.reasoning_content.length} chars`);
-        console.error(`[GLMT-DEBUG] Current block: ${currentBlock?.type || 'none'}, index: ${currentBlock?.index ?? 'N/A'}`);
+        console.error(
+          `[GLMT-DEBUG] Current block: ${currentBlock?.type || 'none'}, index: ${currentBlock?.index ?? 'N/A'}`
+        );
       }
 
       if (!currentBlock || currentBlock.type !== 'thinking') {
@@ -781,10 +796,9 @@ export class GlmtTransformer {
       }
 
       accumulator.addDelta(delta.reasoning_content);
-      events.push(this.createThinkingDeltaEvent(
-        accumulator.getCurrentBlock()!,
-        delta.reasoning_content
-      ));
+      events.push(
+        this.createThinkingDeltaEvent(accumulator.getCurrentBlock()!, delta.reasoning_content)
+      );
     }
 
     // Text content delta
@@ -808,15 +822,14 @@ export class GlmtTransformer {
       }
 
       accumulator.addDelta(delta.content);
-      events.push(this.createTextDeltaEvent(
-        accumulator.getCurrentBlock()!,
-        delta.content
-      ));
+      events.push(this.createTextDeltaEvent(accumulator.getCurrentBlock()!, delta.content));
     }
 
     // Check for planning loop
     if (accumulator.checkForLoop()) {
-      this.log('WARNING: Planning loop detected - 3 consecutive thinking blocks with no tool calls');
+      this.log(
+        'WARNING: Planning loop detected - 3 consecutive thinking blocks with no tool calls'
+      );
       this.log('Forcing early finalization to prevent unbounded planning');
 
       // Close current block if any
@@ -872,9 +885,9 @@ export class GlmtTransformer {
               content_block: {
                 type: 'tool_use',
                 id: toolCall?.id || `tool_${toolCallDelta.index}`,
-                name: toolCall?.function?.name || ''
-              }
-            }
+                name: toolCall?.function?.name || '',
+              },
+            },
           });
         }
 
@@ -889,9 +902,9 @@ export class GlmtTransformer {
                 index: currentToolBlock.index,
                 delta: {
                   type: 'input_json_delta',
-                  partial_json: toolCallDelta.function.arguments
-                }
-              }
+                  partial_json: toolCallDelta.function.arguments,
+                },
+              },
             });
           }
         }
@@ -910,7 +923,10 @@ export class GlmtTransformer {
 
     // Debug logging for generated events
     if (this.debugLog && events.length > 0) {
-      this.writeDebugLog('delta-anthropic-events', { events, accumulator: accumulator.getSummary() });
+      this.writeDebugLog('delta-anthropic-events', {
+        events,
+        accumulator: accumulator.getSummary(),
+      });
     }
 
     return events;
@@ -945,21 +961,21 @@ export class GlmtTransformer {
       data: {
         type: 'message_delta',
         delta: {
-          stop_reason: this.mapStopReason(accumulator.getFinishReason() || 'stop')
+          stop_reason: this.mapStopReason(accumulator.getFinishReason() || 'stop'),
         },
         usage: {
           input_tokens: accumulator.getInputTokens(),
-          output_tokens: accumulator.getOutputTokens()
-        }
-      }
+          output_tokens: accumulator.getOutputTokens(),
+        },
+      },
     });
 
     // Message stop
     events.push({
       event: 'message_stop',
       data: {
-        type: 'message_stop'
-      }
+        type: 'message_stop',
+      },
     });
 
     accumulator.setFinalized(true);
@@ -983,10 +999,10 @@ export class GlmtTransformer {
           stop_reason: null,
           usage: {
             input_tokens: accumulator.getInputTokens(),
-            output_tokens: 0
-          }
-        }
-      }
+            output_tokens: 0,
+          },
+        },
+      },
     };
   }
 
@@ -1001,9 +1017,9 @@ export class GlmtTransformer {
         index: block.index,
         content_block: {
           type: block.type,
-          [block.type]: ''
-        }
-      }
+          [block.type]: '',
+        },
+      },
     };
   }
 
@@ -1018,9 +1034,9 @@ export class GlmtTransformer {
         index: block.index,
         delta: {
           type: 'thinking_delta',
-          thinking: delta
-        }
-      }
+          thinking: delta,
+        },
+      },
     };
   }
 
@@ -1035,9 +1051,9 @@ export class GlmtTransformer {
         index: block.index,
         delta: {
           type: 'text_delta',
-          text: delta
-        }
-      }
+          text: delta,
+        },
+      },
     };
   }
 
@@ -1049,7 +1065,9 @@ export class GlmtTransformer {
     if (!block.content || block.content.length === 0) {
       if (this.verbose) {
         this.log(`WARNING: Skipping signature for empty thinking block ${block.index}`);
-        this.log(`This indicates a race condition - signature requested before content accumulated`);
+        this.log(
+          `This indicates a race condition - signature requested before content accumulated`
+        );
       }
       return null;
     }
@@ -1067,9 +1085,9 @@ export class GlmtTransformer {
         index: block.index,
         delta: {
           type: 'thinking_signature_delta',
-          signature: signature
-        }
-      }
+          signature: signature,
+        },
+      },
     };
   }
 
@@ -1081,8 +1099,8 @@ export class GlmtTransformer {
       event: 'content_block_stop',
       data: {
         type: 'content_block_stop',
-        index: block.index
-      }
+        index: block.index,
+      },
     };
   }
 

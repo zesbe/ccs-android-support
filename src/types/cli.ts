@@ -8,10 +8,10 @@ import { SpawnOptions as NodeSpawnOptions } from 'child_process';
  * Parsed CLI arguments
  */
 export interface ParsedArgs {
-  profile?: string;        // Profile name (glm, kimi, work, etc.)
-  prompt?: string;         // -p/--prompt flag value
-  isDelegation: boolean;   // -p flag present
-  isContinue: boolean;     // :continue suffix detected
+  profile?: string; // Profile name (glm, kimi, work, etc.)
+  prompt?: string; // -p/--prompt flag value
+  isDelegation: boolean; // -p flag present
+  isContinue: boolean; // :continue suffix detected
   remainingArgs: string[]; // Args to pass to Claude CLI
 }
 

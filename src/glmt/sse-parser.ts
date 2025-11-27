@@ -72,7 +72,7 @@ export class SSEParser {
           events.push({
             event: 'done',
             data: null,
-            index: this.eventCount
+            index: this.eventCount,
           });
           currentEvent = { event: 'message', data: '' };
         } else {
@@ -85,7 +85,12 @@ export class SSEParser {
           } catch (e) {
             // H-01 Fix: Log parse errors for debugging
             if (typeof console !== 'undefined' && console.error) {
-              console.error('[SSEParser] Malformed JSON event:', (e as Error).message, 'Data:', data.substring(0, 100));
+              console.error(
+                '[SSEParser] Malformed JSON event:',
+                (e as Error).message,
+                'Data:',
+                data.substring(0, 100)
+              );
             }
           }
         }

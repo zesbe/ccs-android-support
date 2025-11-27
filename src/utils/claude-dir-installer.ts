@@ -29,15 +29,15 @@ try {
   ora = oraModule.default || oraModule;
 } catch {
   // ora not available, create fallback spinner that uses console.log
-  ora = function(text: string): OraInstance {
+  ora = function (text: string): OraInstance {
     return {
       start: () => ({
         succeed: (msg?: string) => console.log(msg || `[OK] ${text}`),
         fail: (msg?: string) => console.log(msg || `[X] ${text}`),
         warn: (msg?: string) => console.log(msg || `[!] ${text}`),
         info: (msg?: string) => console.log(msg || `[i] ${text}`),
-        text: ''
-      })
+        text: '',
+      }),
     };
   };
 }
@@ -71,7 +71,8 @@ export class ClaudeDirInstaller {
    * @param silent - Suppress spinner output
    */
   install(packageDir?: string, silent = false): boolean {
-    const spinner = (silent || !ora) ? null : ora('Copying .claude/ items to ~/.ccs/.claude/').start();
+    const spinner =
+      silent || !ora ? null : ora('Copying .claude/ items to ~/.ccs/.claude/').start();
 
     try {
       // Auto-detect package directory if not provided
@@ -197,7 +198,12 @@ export class ClaudeDirInstaller {
   cleanupDeprecated(silent = false): CleanupResult {
     const deprecatedFile = path.join(this.ccsClaudeDir, 'agents', 'ccs-delegator.md');
     const userSymlinkFile = path.join(this.homeDir, '.claude', 'agents', 'ccs-delegator.md');
-    const migrationMarker = path.join(this.homeDir, '.ccs', '.migrations', 'v435-delegator-cleanup');
+    const migrationMarker = path.join(
+      this.homeDir,
+      '.ccs',
+      '.migrations',
+      'v435-delegator-cleanup'
+    );
 
     const cleanedFiles: string[] = [];
 
@@ -239,7 +245,8 @@ export class ClaudeDirInstaller {
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
             const backupPath = `${deprecatedFile}.backup-${timestamp}`;
             fs.renameSync(deprecatedFile, backupPath);
-            if (!silent) console.log(`[i] Backed up modified deprecated file to ${path.basename(backupPath)}`);
+            if (!silent)
+              console.log(`[i] Backed up modified deprecated file to ${path.basename(backupPath)}`);
           } else {
             fs.rmSync(deprecatedFile, { force: true });
           }

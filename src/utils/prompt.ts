@@ -28,7 +28,11 @@ export class InteractivePrompt {
     const { default: defaultValue = false } = options;
 
     // Check for --yes flag (automation) - always returns true
-    if (process.env.CCS_YES === '1' || process.argv.includes('--yes') || process.argv.includes('-y')) {
+    if (
+      process.env.CCS_YES === '1' ||
+      process.argv.includes('--yes') ||
+      process.argv.includes('-y')
+    ) {
       return true;
     }
 
@@ -46,12 +50,10 @@ export class InteractivePrompt {
     const rl = readline.createInterface({
       input: process.stdin,
       output: process.stderr,
-      terminal: true
+      terminal: true,
     });
 
-    const promptText = defaultValue
-      ? `${message} [Y/n]: `
-      : `${message} [y/N]: `;
+    const promptText = defaultValue ? `${message} [Y/n]: ` : `${message} [y/N]: `;
 
     return new Promise((resolve) => {
       rl.question(promptText, (answer: string) => {
@@ -100,12 +102,10 @@ export class InteractivePrompt {
     const rl = readline.createInterface({
       input: process.stdin,
       output: process.stderr,
-      terminal: true
+      terminal: true,
     });
 
-    const promptText = defaultValue
-      ? `${message} [${defaultValue}]: `
-      : `${message}: `;
+    const promptText = defaultValue ? `${message} [${defaultValue}]: ` : `${message}: `;
 
     return new Promise((resolve) => {
       rl.question(promptText, (answer: string) => {

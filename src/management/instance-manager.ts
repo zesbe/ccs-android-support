@@ -64,10 +64,10 @@ class InstanceManager {
         'file-history',
         'shell-snapshots',
         'debug',
-        '.anthropic'
+        '.anthropic',
       ];
 
-      subdirs.forEach(dir => {
+      subdirs.forEach((dir) => {
         const dirPath = path.join(instancePath, dir);
         if (!fs.existsSync(dirPath)) {
           fs.mkdirSync(dirPath, { recursive: true, mode: 0o700 });
@@ -80,7 +80,9 @@ class InstanceManager {
       // Copy global configs if exist (settings.json only)
       this.copyGlobalConfigs(instancePath);
     } catch (error) {
-      throw new Error(`Failed to initialize instance for ${profileName}: ${(error as Error).message}`);
+      throw new Error(
+        `Failed to initialize instance for ${profileName}: ${(error as Error).message}`
+      );
     }
   }
 
@@ -96,7 +98,7 @@ class InstanceManager {
       'file-history',
       'shell-snapshots',
       'debug',
-      '.anthropic'
+      '.anthropic',
     ];
 
     for (const dir of requiredDirs) {
@@ -132,11 +134,10 @@ class InstanceManager {
       return [];
     }
 
-    return fs.readdirSync(this.instancesDir)
-      .filter(name => {
-        const instancePath = path.join(this.instancesDir, name);
-        return fs.statSync(instancePath).isDirectory();
-      });
+    return fs.readdirSync(this.instancesDir).filter((name) => {
+      const instancePath = path.join(this.instancesDir, name);
+      return fs.statSync(instancePath).isDirectory();
+    });
   }
 
   /**

@@ -31,11 +31,12 @@ export class DelegationValidator {
       return {
         valid: false,
         error: `Profile not found: ${profileName}`,
-        suggestion: `Profile settings missing at: ${settingsPath}\n\n` +
-                   `To set up ${profileName} profile:\n` +
-                   `  1. Copy base settings: cp config/base-${profileName}.settings.json ~/.ccs/${profileName}.settings.json\n` +
-                   `  2. Edit settings: Edit ~/.ccs/${profileName}.settings.json\n` +
-                   `  3. Set your API key in ANTHROPIC_AUTH_TOKEN field`
+        suggestion:
+          `Profile settings missing at: ${settingsPath}\n\n` +
+          `To set up ${profileName} profile:\n` +
+          `  1. Copy base settings: cp config/base-${profileName}.settings.json ~/.ccs/${profileName}.settings.json\n` +
+          `  2. Edit settings: Edit ~/.ccs/${profileName}.settings.json\n` +
+          `  3. Set your API key in ANTHROPIC_AUTH_TOKEN field`,
       };
     }
 
@@ -48,11 +49,12 @@ export class DelegationValidator {
       return {
         valid: false,
         error: `Failed to parse settings.json for ${profileName}`,
-        suggestion: `Settings file is corrupted or invalid JSON.\n\n` +
-                   `Location: ${settingsPath}\n` +
-                   `Parse error: ${(error as Error).message}\n\n` +
-                   `Fix: Restore from base config:\n` +
-                   `  cp config/base-${profileName}.settings.json ~/.ccs/${profileName}.settings.json`
+        suggestion:
+          `Settings file is corrupted or invalid JSON.\n\n` +
+          `Location: ${settingsPath}\n` +
+          `Parse error: ${(error as Error).message}\n\n` +
+          `Fix: Restore from base config:\n` +
+          `  cp config/base-${profileName}.settings.json ~/.ccs/${profileName}.settings.json`,
       };
     }
 
@@ -63,9 +65,10 @@ export class DelegationValidator {
       return {
         valid: false,
         error: `API key not configured for ${profileName}`,
-        suggestion: `Missing ANTHROPIC_AUTH_TOKEN in settings.\n\n` +
-                   `Edit: ${settingsPath}\n` +
-                   `Set: env.ANTHROPIC_AUTH_TOKEN to your API key`
+        suggestion:
+          `Missing ANTHROPIC_AUTH_TOKEN in settings.\n\n` +
+          `Edit: ${settingsPath}\n` +
+          `Set: env.ANTHROPIC_AUTH_TOKEN to your API key`,
       };
     }
 
@@ -75,20 +78,21 @@ export class DelegationValidator {
       'YOUR_KIMI_API_KEY_HERE',
       'YOUR_API_KEY_HERE',
       'your-api-key-here',
-      'PLACEHOLDER'
+      'PLACEHOLDER',
     ];
 
-    if (defaultPlaceholders.some(placeholder => apiKey.includes(placeholder))) {
+    if (defaultPlaceholders.some((placeholder) => apiKey.includes(placeholder))) {
       return {
         valid: false,
         error: `Default API key placeholder detected for ${profileName}`,
-        suggestion: `API key is still set to default placeholder.\n\n` +
-                   `To configure your profile:\n` +
-                   `  1. Edit: ${settingsPath}\n` +
-                   `  2. Replace ANTHROPIC_AUTH_TOKEN with your actual API key\n\n` +
-                   `Get API key:\n` +
-                   `  GLM: https://z.ai/manage-apikey/apikey-list\n` +
-                   `  Kimi: https://platform.moonshot.cn/console/api-keys`
+        suggestion:
+          `API key is still set to default placeholder.\n\n` +
+          `To configure your profile:\n` +
+          `  1. Edit: ${settingsPath}\n` +
+          `  2. Replace ANTHROPIC_AUTH_TOKEN with your actual API key\n\n` +
+          `Get API key:\n` +
+          `  GLM: https://z.ai/manage-apikey/apikey-list\n` +
+          `  Kimi: https://platform.moonshot.cn/console/api-keys`,
       };
     }
 
@@ -96,7 +100,7 @@ export class DelegationValidator {
     return {
       valid: true,
       settingsPath,
-      apiKey: apiKey.substring(0, 8) + '...' // Show first 8 chars for verification
+      apiKey: apiKey.substring(0, 8) + '...', // Show first 8 chars for verification
     };
   }
 

@@ -92,7 +92,7 @@ export function getSettingsPath(profile: string): string {
 
   if (!settingsPath) {
     const availableProfiles = Object.keys(config.profiles);
-    const profileList = availableProfiles.map(p => `  - ${p}`);
+    const profileList = availableProfiles.map((p) => `  - ${p}`);
     error(`Profile '${profile}' not found. Available profiles:\n${profileList.join('\n')}`);
   }
 

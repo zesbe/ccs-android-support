@@ -59,8 +59,8 @@ class RecoveryManager {
       profiles: {
         glm: '~/.ccs/glm.settings.json',
         kimi: '~/.ccs/kimi.settings.json',
-        default: '~/.claude/settings.json'
-      }
+        default: '~/.claude/settings.json',
+      },
     };
 
     const tmpPath = `${configPath}.tmp`;
@@ -124,10 +124,10 @@ class RecoveryManager {
 
     console.log('');
     console.log('[i] Auto-recovery completed:');
-    this.recovered.forEach(msg => console.log(`    - ${msg}`));
+    this.recovered.forEach((msg) => console.log(`    - ${msg}`));
 
     // Show login hint if created Claude settings
-    if (this.recovered.some(msg => msg.includes('settings.json'))) {
+    if (this.recovered.some((msg) => msg.includes('settings.json'))) {
       console.log('');
       console.log('[i] Next step: Login to Claude CLI');
       console.log('    Run: claude /login');

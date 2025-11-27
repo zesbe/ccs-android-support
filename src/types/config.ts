@@ -55,10 +55,7 @@ export interface ProfilesRegistry {
  */
 export function isConfig(obj: unknown): obj is Config {
   return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'profiles' in obj &&
-    typeof obj.profiles === 'object'
+    typeof obj === 'object' && obj !== null && 'profiles' in obj && typeof obj.profiles === 'object'
   );
 }
 
@@ -67,5 +64,5 @@ export function isSettings(obj: unknown): obj is Settings {
   if (!('env' in obj)) return true; // env is optional
   if (typeof obj.env !== 'object' || obj.env === null) return false;
   // Validate all env values are strings
-  return Object.values(obj.env).every(v => typeof v === 'string');
+  return Object.values(obj.env).every((v) => typeof v === 'string');
 }

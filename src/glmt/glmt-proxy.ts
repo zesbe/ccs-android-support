@@ -83,10 +83,12 @@ export class GlmtProxy {
   constructor(config: GlmtProxyConfig = {}) {
     this.transformer = new GlmtTransformer({
       verbose: config.verbose,
-      debugLog: config.debugLog || process.env.CCS_DEBUG === '1' || process.env.CCS_DEBUG_LOG === '1'
+      debugLog:
+        config.debugLog || process.env.CCS_DEBUG === '1' || process.env.CCS_DEBUG_LOG === '1',
     });
     // Use ANTHROPIC_BASE_URL from environment (set by settings.json) or fallback to Z.AI default
-    this.upstreamUrl = process.env.ANTHROPIC_BASE_URL || 'https://api.z.ai/api/coding/paas/v4/chat/completions';
+    this.upstreamUrl =
+      process.env.ANTHROPIC_BASE_URL || 'https://api.z.ai/api/coding/paas/v4/chat/completions';
     this.server = null;
     this.port = null;
     this.verbose = config.verbose || false;
@@ -111,12 +113,16 @@ export class GlmtProxy {
 
         // Info message (only show in verbose mode)
         if (this.verbose) {
-          console.error(`[glmt] Proxy listening on port ${this.port} (streaming with auto-fallback)`);
+          console.error(
+            `[glmt] Proxy listening on port ${this.port} (streaming with auto-fallback)`
+          );
         }
 
         // Debug mode notice
         if ((this.transformer as unknown as { debugLog: boolean }).debugLog) {
-          console.error(`[glmt] Debug logging enabled: ${(this.transformer as unknown as { debugLogDir: string }).debugLogDir}`);
+          console.error(
+            `[glmt] Debug logging enabled: ${(this.transformer as unknown as { debugLogDir: string }).debugLogDir}`
+          );
           console.error(`[glmt] WARNING: Debug logs contain full request/response data`);
         }
 
@@ -157,18 +163,22 @@ export class GlmtProxy {
       } catch (jsonError) {
         const err = jsonError as Error;
         res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({
-          error: {
-            type: 'invalid_request_error',
-            message: 'Invalid JSON in request body: ' + err.message
-          }
-        }));
+        res.end(
+          JSON.stringify({
+            error: {
+              type: 'invalid_request_error',
+              message: 'Invalid JSON in request body: ' + err.message,
+            },
+          })
+        );
         return;
       }
 
       // Log thinking parameter for debugging
       if (anthropicRequest.thinking) {
-        this.log(`Request contains thinking parameter: ${JSON.stringify(anthropicRequest.thinking)}`);
+        this.log(
+          `Request contains thinking parameter: ${JSON.stringify(anthropicRequest.thinking)}`
+        );
       } else {
         this.log(`Request does NOT contain thinking parameter (will use message tags or default)`);
       }
@@ -192,7 +202,6 @@ export class GlmtProxy {
       } else {
         await this.handleBufferedRequest(req, res, anthropicRequest, startTime);
       }
-
     } catch (error) {
       const err = error as Error;
       console.error('[glmt-proxy] Request error:', err.message);
@@ -200,12 +209,14 @@ export class GlmtProxy {
       this.log(`Request failed after ${duration}ms: ${err.message}`);
 
       res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({
-        error: {
-          type: 'proxy_error',
-          message: err.message
-        }
-      }));
+      res.end(
+        JSON.stringify({
+          error: {
+            type: 'proxy_error',
+            message: err.message,
+          },
+        })
+      );
     }
   }
 
@@ -219,16 +230,17 @@ export class GlmtProxy {
     startTime: number
   ): Promise<void> {
     // Transform to OpenAI format
-    const { openaiRequest, thinkingConfig } =
-      this.transformer.transformRequest(anthropicRequest as unknown as Parameters<typeof this.transformer.transformRequest>[0]);
+    const { openaiRequest, thinkingConfig } = this.transformer.transformRequest(
+      anthropicRequest as unknown as Parameters<typeof this.transformer.transformRequest>[0]
+    );
 
     this.log(`Transformed request, thinking: ${thinkingConfig.thinking}`);
 
     // Forward to Z.AI
-    const openaiResponse = await this.forwardToUpstream(
+    const openaiResponse = (await this.forwardToUpstream(
       openaiRequest as unknown as OpenAIRequest,
       {}
-    ) as OpenAIResponse;
+    )) as OpenAIResponse;
 
     this.log(`Received response from upstream`);
 
@@ -241,7 +253,7 @@ export class GlmtProxy {
     // Return to Claude CLI
     res.writeHead(200, {
       'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*'
+      'Access-Control-Allow-Origin': '*',
     });
     res.end(JSON.stringify(anthropicResponse));
 
@@ -261,8 +273,9 @@ export class GlmtProxy {
     this.log('Using streaming mode');
 
     // Transform request
-    const { openaiRequest, thinkingConfig } =
-      this.transformer.transformRequest(anthropicRequest as unknown as Parameters<typeof this.transformer.transformRequest>[0]);
+    const { openaiRequest, thinkingConfig } = this.transformer.transformRequest(
+      anthropicRequest as unknown as Parameters<typeof this.transformer.transformRequest>[0]
+    );
 
     // Force streaming
     (openaiRequest as OpenAIRequest).stream = true;
@@ -271,9 +284,9 @@ export class GlmtProxy {
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
+      Connection: 'keep-alive',
       'Access-Control-Allow-Origin': '*',
-      'X-Accel-Buffering': 'no' // Disable proxy buffering
+      'X-Accel-Buffering': 'no', // Disable proxy buffering
     });
 
     // Disable Nagle's algorithm to prevent buffering at socket level
@@ -335,9 +348,9 @@ export class GlmtProxy {
         headers: {
           'Content-Type': 'application/json',
           'Content-Length': Buffer.byteLength(requestBody),
-          'Authorization': process.env.ANTHROPIC_AUTH_TOKEN || '',
-          'User-Agent': 'CCS-GLMT-Proxy/1.0'
-        }
+          Authorization: process.env.ANTHROPIC_AUTH_TOKEN || '',
+          'User-Agent': 'CCS-GLMT-Proxy/1.0',
+        },
       };
 
       // Debug logging
@@ -362,9 +375,7 @@ export class GlmtProxy {
 
             // Check for non-200 status
             if (res.statusCode !== 200) {
-              reject(new Error(
-                `Upstream error: ${res.statusCode} ${res.statusMessage}\n${body}`
-              ));
+              reject(new Error(`Upstream error: ${res.statusCode} ${res.statusMessage}\n${body}`));
               return;
             }
 
@@ -409,10 +420,10 @@ export class GlmtProxy {
         headers: {
           'Content-Type': 'application/json',
           'Content-Length': Buffer.byteLength(requestBody),
-          'Authorization': process.env.ANTHROPIC_AUTH_TOKEN || '',
+          Authorization: process.env.ANTHROPIC_AUTH_TOKEN || '',
           'User-Agent': 'CCS-GLMT-Proxy/1.0',
-          'Accept': 'text/event-stream'
-        }
+          Accept: 'text/event-stream',
+        },
       };
 
       this.log(`Forwarding streaming request to: ${url.hostname}${url.pathname}`);
@@ -427,7 +438,7 @@ export class GlmtProxy {
         clearTimeout(timeoutHandle);
         if (upstreamRes.statusCode !== 200) {
           let body = '';
-          upstreamRes.on('data', (chunk: Buffer) => body += chunk.toString());
+          upstreamRes.on('data', (chunk: Buffer) => (body += chunk.toString()));
           upstreamRes.on('end', () => {
             reject(new Error(`Upstream error: ${upstreamRes.statusCode}\n${body}`));
           });
@@ -441,12 +452,12 @@ export class GlmtProxy {
           try {
             const events = parser.parse(chunk);
 
-            events.forEach(event => {
+            events.forEach((event) => {
               // Transform OpenAI delta → Anthropic events
               const anthropicEvents = this.transformer.transformDelta(event, accumulator);
 
               // Forward to Claude CLI with immediate flush
-              anthropicEvents.forEach(evt => {
+              anthropicEvents.forEach((evt) => {
                 const eventLine = `event: ${evt.event}\n`;
                 const dataLine = `data: ${JSON.stringify(evt.data)}\n\n`;
                 clientRes.write(eventLine + dataLine);
@@ -521,7 +532,7 @@ if (require.main === module) {
 
   const proxy = new GlmtProxy({ verbose });
 
-  proxy.start().catch(error => {
+  proxy.start().catch((error) => {
     console.error('[glmt-proxy] Failed to start:', error);
     process.exit(1);
   });

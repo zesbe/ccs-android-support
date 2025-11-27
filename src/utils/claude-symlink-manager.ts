@@ -38,15 +38,15 @@ try {
   ora = oraModule.default || oraModule;
 } catch {
   // ora not available, create fallback spinner that uses console.log
-  ora = function(text: string): OraInstance {
+  ora = function (text: string): OraInstance {
     return {
       start: () => ({
         succeed: (msg?: string) => console.log(msg || `[OK] ${text}`),
         fail: (msg?: string) => console.log(msg || `[X] ${text}`),
         warn: (msg?: string) => console.log(msg || `[!] ${text}`),
         info: (msg?: string) => console.log(msg || `[i] ${text}`),
-        text: ''
-      })
+        text: '',
+      }),
     };
   };
 }
@@ -80,7 +80,7 @@ export class ClaudeSymlinkManager {
     this.ccsItems = [
       { source: 'commands/ccs.md', target: 'commands/ccs.md', type: 'file' },
       { source: 'commands/ccs', target: 'commands/ccs', type: 'directory' },
-      { source: 'skills/ccs-delegation', target: 'skills/ccs-delegation', type: 'directory' }
+      { source: 'skills/ccs-delegation', target: 'skills/ccs-delegation', type: 'directory' },
     ];
   }
 
@@ -89,7 +89,7 @@ export class ClaudeSymlinkManager {
    * Safe: backs up existing files before creating symlinks
    */
   install(silent = false): void {
-    const spinner = (silent || !ora) ? null : ora('Installing CCS items to ~/.claude/').start();
+    const spinner = silent || !ora ? null : ora('Installing CCS items to ~/.claude/').start();
 
     // Ensure ~/.ccs/.claude/ exists (should be shipped with package)
     if (!fs.existsSync(this.ccsClaudeDir)) {

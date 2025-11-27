@@ -34,10 +34,10 @@ export const ERROR_CODES = {
 
   // Internal Errors (E900-E999)
   INTERNAL_ERROR: 'E900',
-  INVALID_STATE: 'E901'
+  INVALID_STATE: 'E901',
 } as const;
 
-export type ErrorCode = typeof ERROR_CODES[keyof typeof ERROR_CODES];
+export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
 
 /**
  * Error code documentation URL generator

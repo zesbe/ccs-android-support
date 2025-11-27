@@ -8,7 +8,7 @@ import { ColorName, TerminalInfo } from '../types';
 function getColors(): Record<ColorName, string> {
   const forcedColors = process.env.FORCE_COLOR;
   const noColor = process.env.NO_COLOR;
-  const isTTY = process.stdout.isTTY === true;  // Must be explicitly true
+  const isTTY = process.stdout.isTTY === true; // Must be explicitly true
 
   const useColors = !!forcedColors || (isTTY && !noColor);
 
@@ -20,7 +20,7 @@ function getColors(): Record<ColorName, string> {
       green: '\x1b[0;32m',
       blue: '\x1b[0;34m',
       bold: '\x1b[1m',
-      reset: '\x1b[0m'
+      reset: '\x1b[0m',
     };
   }
 
@@ -106,8 +106,8 @@ export function levenshteinDistance(a: string, b: string): number {
       } else {
         matrix[i][j] = Math.min(
           matrix[i - 1][j - 1] + 1, // substitution
-          matrix[i][j - 1] + 1,     // insertion
-          matrix[i - 1][j] + 1      // deletion
+          matrix[i][j - 1] + 1, // insertion
+          matrix[i - 1][j] + 1 // deletion
         );
       }
     }
@@ -127,14 +127,14 @@ export function findSimilarStrings(
   const targetLower = target.toLowerCase();
 
   const matches = candidates
-    .map(candidate => ({
+    .map((candidate) => ({
       name: candidate,
-      distance: levenshteinDistance(targetLower, candidate.toLowerCase())
+      distance: levenshteinDistance(targetLower, candidate.toLowerCase()),
     }))
-    .filter(item => item.distance <= maxDistance && item.distance > 0)
+    .filter((item) => item.distance <= maxDistance && item.distance > 0)
     .sort((a, b) => a.distance - b.distance)
-    .slice(0, 3)  // Show at most 3 suggestions
-    .map(item => item.name);
+    .slice(0, 3) // Show at most 3 suggestions
+    .map((item) => item.name);
 
   return matches;
 }

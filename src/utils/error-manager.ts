@@ -10,10 +10,10 @@ export const ErrorTypes = {
   INVALID_CONFIG: 'INVALID_CONFIG',
   UNKNOWN_PROFILE: 'UNKNOWN_PROFILE',
   PERMISSION_DENIED: 'PERMISSION_DENIED',
-  GENERIC: 'GENERIC'
+  GENERIC: 'GENERIC',
 } as const;
 
-export type ErrorType = typeof ErrorTypes[keyof typeof ErrorTypes];
+export type ErrorType = (typeof ErrorTypes)[keyof typeof ErrorTypes];
 
 /**
  * Enhanced error manager with context-aware messages
@@ -55,7 +55,8 @@ export class ErrorManager {
    * Show settings file not found error
    */
   static showSettingsNotFound(settingsPath: string): void {
-    const isClaudeSettings = settingsPath.includes('.claude') && settingsPath.endsWith('settings.json');
+    const isClaudeSettings =
+      settingsPath.includes('.claude') && settingsPath.endsWith('settings.json');
 
     console.error('');
     console.error(colored('[X] Settings file not found', 'red'));
@@ -118,12 +119,12 @@ export class ErrorManager {
 
     if (suggestions && suggestions.length > 0) {
       console.error(colored('Did you mean:', 'yellow'));
-      suggestions.forEach(s => console.error(`  ${s}`));
+      suggestions.forEach((s) => console.error(`  ${s}`));
       console.error('');
     }
 
     console.error(colored('Available profiles:', 'cyan'));
-    availableProfiles.forEach(line => console.error(`  ${line}`));
+    availableProfiles.forEach((line) => console.error(`  ${line}`));
     console.error('');
     console.error(colored('Solutions:', 'yellow'));
     console.error('  # Use existing profile');

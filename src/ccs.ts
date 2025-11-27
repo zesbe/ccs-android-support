@@ -17,7 +17,9 @@ import { getSettingsPath, getConfigPath } from './utils/config-manager';
 import { ErrorManager } from './utils/error-manager';
 
 // Version (sync with package.json)
-const CCS_VERSION = JSON.parse(fs.readFileSync(path.join(__dirname, '../package.json'), 'utf8')).version;
+const CCS_VERSION = JSON.parse(
+  fs.readFileSync(path.join(__dirname, '../package.json'), 'utf8')
+).version;
 
 // ========== Helper Functions ==========
 
@@ -31,7 +33,11 @@ function escapeShellArg(arg: string): string {
 /**
  * Execute Claude CLI with unified spawn logic
  */
-function execClaude(claudeCli: string, args: string[], envVars: NodeJS.ProcessEnv | null = null): void {
+function execClaude(
+  claudeCli: string,
+  args: string[],
+  envVars: NodeJS.ProcessEnv | null = null
+): void {
   const isWindows = process.platform === 'win32';
   const needsShell = isWindows && /\.(cmd|bat|ps1)$/i.test(claudeCli);
 
@@ -46,14 +52,14 @@ function execClaude(claudeCli: string, args: string[], envVars: NodeJS.ProcessEn
       stdio: 'inherit',
       windowsHide: true,
       shell: true,
-      env
+      env,
     });
   } else {
     // When no shell needed: use array form (faster, no shell overhead)
     child = spawn(claudeCli, args, {
       stdio: 'inherit',
       windowsHide: true,
-      env
+      env,
     });
   }
 
@@ -125,7 +131,9 @@ function handleVersionCommand(): void {
 
   if (readyProfiles.length > 0) {
     console.log(colored('Delegation Ready:', 'cyan'));
-    console.log(`  ${colored('[OK]', 'yellow')} ${readyProfiles.join(', ')} profiles are ready for delegation`);
+    console.log(
+      `  ${colored('[OK]', 'yellow')} ${readyProfiles.join(', ')} profiles are ready for delegation`
+    );
     console.log('');
   } else if (delegationEnabled) {
     console.log(colored('Delegation Ready:', 'cyan'));
@@ -136,7 +144,7 @@ function handleVersionCommand(): void {
   console.log(`${colored('Documentation:', 'cyan')} https://github.com/kaitranntt/ccs`);
   console.log(`${colored('License:', 'cyan')} MIT`);
   console.log('');
-  console.log(colored('Run \'ccs --help\' for usage information', 'yellow'));
+  console.log(colored("Run 'ccs --help' for usage information", 'yellow'));
 
   process.exit(0);
 }
@@ -145,7 +153,9 @@ function handleVersionCommand(): void {
  * Handle help command
  */
 function handleHelpCommand(): void {
-  console.log(colored('CCS (Claude Code Switch) - Instant profile switching for Claude CLI', 'bold'));
+  console.log(
+    colored('CCS (Claude Code Switch) - Instant profile switching for Claude CLI', 'bold')
+  );
   console.log('');
 
   console.log(colored('Usage:', 'cyan'));
@@ -162,34 +172,52 @@ function handleHelpCommand(): void {
   console.log(colored('Model Switching:', 'cyan'));
   console.log(`  ${colored('ccs', 'yellow')}                         Use default Claude account`);
   console.log(`  ${colored('ccs glm', 'yellow')}                     Switch to GLM 4.6 model`);
-  console.log(`  ${colored('ccs glmt', 'yellow')}                    Switch to GLM with thinking mode`);
+  console.log(
+    `  ${colored('ccs glmt', 'yellow')}                    Switch to GLM with thinking mode`
+  );
   console.log(`  ${colored('ccs glmt --verbose', 'yellow')}          Enable debug logging`);
   console.log(`  ${colored('ccs kimi', 'yellow')}                    Switch to Kimi for Coding`);
   console.log(`  ${colored('ccs glm', 'yellow')} "debug this code"   Use GLM and run command`);
   console.log('');
 
   console.log(colored('Account Management:', 'cyan'));
-  console.log(`  ${colored('ccs auth --help', 'yellow')}             Run multiple Claude accounts concurrently`);
+  console.log(
+    `  ${colored('ccs auth --help', 'yellow')}             Run multiple Claude accounts concurrently`
+  );
   console.log('');
 
   console.log(colored('Delegation (inside Claude Code CLI):', 'cyan'));
-  console.log(`  ${colored('/ccs "task"', 'yellow')}                Delegate task (auto-selects best profile)`);
-  console.log(`  ${colored('/ccs --glm "task"', 'yellow')}           Force GLM-4.6 for simple tasks`);
+  console.log(
+    `  ${colored('/ccs "task"', 'yellow')}                Delegate task (auto-selects best profile)`
+  );
+  console.log(
+    `  ${colored('/ccs --glm "task"', 'yellow')}           Force GLM-4.6 for simple tasks`
+  );
   console.log(`  ${colored('/ccs --kimi "task"', 'yellow')}          Force Kimi for long context`);
-  console.log(`  ${colored('/ccs:continue "follow-up"', 'yellow')}    Continue last delegation session`);
+  console.log(
+    `  ${colored('/ccs:continue "follow-up"', 'yellow')}    Continue last delegation session`
+  );
   console.log('  Save tokens by delegating simple tasks to cost-optimized models');
   console.log('');
 
   console.log(colored('Diagnostics:', 'cyan'));
-  console.log(`  ${colored('ccs doctor', 'yellow')}                  Run health check and diagnostics`);
-  console.log(`  ${colored('ccs sync', 'yellow')}                    Sync delegation commands and skills`);
+  console.log(
+    `  ${colored('ccs doctor', 'yellow')}                  Run health check and diagnostics`
+  );
+  console.log(
+    `  ${colored('ccs sync', 'yellow')}                    Sync delegation commands and skills`
+  );
   console.log(`  ${colored('ccs update', 'yellow')}                  Update CCS to latest version`);
   console.log('');
 
   console.log(colored('Flags:', 'cyan'));
   console.log(`  ${colored('-h, --help', 'yellow')}                  Show this help message`);
-  console.log(`  ${colored('-v, --version', 'yellow')}               Show version and installation info`);
-  console.log(`  ${colored('-sc, --shell-completion', 'yellow')}     Install shell auto-completion`);
+  console.log(
+    `  ${colored('-v, --version', 'yellow')}               Show version and installation info`
+  );
+  console.log(
+    `  ${colored('-sc, --shell-completion', 'yellow')}     Install shell auto-completion`
+  );
   console.log('');
 
   console.log(colored('Configuration:', 'cyan'));
@@ -212,7 +240,9 @@ function handleHelpCommand(): void {
   console.log(`  ${colored('$ ccs', 'yellow')}                        # Use default account`);
   console.log(`  ${colored('$ ccs glm "implement API"', 'yellow')}    # Cost-optimized model`);
   console.log('');
-  console.log(`  For more: ${colored('https://github.com/kaitranntt/ccs/blob/main/README.md', 'cyan')}`);
+  console.log(
+    `  For more: ${colored('https://github.com/kaitranntt/ccs/blob/main/README.md', 'cyan')}`
+  );
   console.log('');
 
   console.log(colored('Uninstall:', 'yellow'));
@@ -312,7 +342,7 @@ function detectInstallationMethod(): 'npm' | 'direct' {
     /\.npm\/global\/bin\//,
     /\/\.nvm\/versions\/node\/[^/]+\/bin\//,
     /\/usr\/local\/bin\//,
-    /\/usr\/bin\//
+    /\/usr\/bin\//,
   ];
 
   for (const pattern of npmGlobalBinPatterns) {
@@ -388,7 +418,7 @@ function detectPackageManager(): 'npm' | 'yarn' | 'pnpm' | 'bun' {
     const yarnResult = spawnSync('yarn', ['global', 'list', '--pattern', '@kaitranntt/ccs'], {
       encoding: 'utf8',
       shell: true,
-      timeout: 5000
+      timeout: 5000,
     });
     if (yarnResult.status === 0 && yarnResult.stdout.includes('@kaitranntt/ccs')) {
       return 'yarn';
@@ -401,7 +431,7 @@ function detectPackageManager(): 'npm' | 'yarn' | 'pnpm' | 'bun' {
     const pnpmResult = spawnSync('pnpm', ['list', '-g', '--pattern', '@kaitranntt/ccs'], {
       encoding: 'utf8',
       shell: true,
-      timeout: 5000
+      timeout: 5000,
     });
     if (pnpmResult.status === 0 && pnpmResult.stdout.includes('@kaitranntt/ccs')) {
       return 'pnpm';
@@ -414,7 +444,7 @@ function detectPackageManager(): 'npm' | 'yarn' | 'pnpm' | 'bun' {
     const bunResult = spawnSync('bun', ['pm', 'ls', '-g', '--pattern', '@kaitranntt/ccs'], {
       encoding: 'utf8',
       shell: true,
-      timeout: 5000
+      timeout: 5000,
     });
     if (bunResult.status === 0 && bunResult.stdout.includes('@kaitranntt/ccs')) {
       return 'bun';
@@ -501,7 +531,9 @@ async function handleUpdateCommand(): Promise<void> {
   }
 
   // Update available
-  console.log(colored(`[i] Update available: ${updateResult.current} -> ${updateResult.latest}`, 'yellow'));
+  console.log(
+    colored(`[i] Update available: ${updateResult.current} -> ${updateResult.latest}`, 'yellow')
+  );
   console.log('');
 
   if (isNpmInstall) {
@@ -548,7 +580,7 @@ async function handleUpdateCommand(): Promise<void> {
 
     const performUpdate = (): void => {
       const child = spawn(updateCommand, updateArgs, {
-        stdio: 'inherit'
+        stdio: 'inherit',
       });
 
       child.on('exit', (code) => {
@@ -583,7 +615,7 @@ async function handleUpdateCommand(): Promise<void> {
     if (cacheCommand && cacheArgs) {
       console.log(colored('Clearing package cache...', 'cyan'));
       const cacheChild = spawn(cacheCommand, cacheArgs, {
-        stdio: 'inherit'
+        stdio: 'inherit',
       });
 
       cacheChild.on('exit', (code) => {
@@ -611,15 +643,20 @@ async function handleUpdateCommand(): Promise<void> {
 
     if (isWindows) {
       command = 'powershell.exe';
-      args = ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command',
-              'irm ccs.kaitran.ca/install | iex'];
+      args = [
+        '-NoProfile',
+        '-ExecutionPolicy',
+        'Bypass',
+        '-Command',
+        'irm ccs.kaitran.ca/install | iex',
+      ];
     } else {
       command = '/bin/bash';
       args = ['-c', 'curl -fsSL ccs.kaitran.ca/install | bash'];
     }
 
     const child = spawn(command, args, {
-      stdio: 'inherit'
+      stdio: 'inherit',
     });
 
     child.on('exit', (code) => {
@@ -685,7 +722,11 @@ function detectProfile(args: string[]): DetectedProfile {
 /**
  * Execute Claude CLI with embedded proxy (for GLMT profile)
  */
-async function execClaudeWithProxy(claudeCli: string, profileName: string, args: string[]): Promise<void> {
+async function execClaudeWithProxy(
+  claudeCli: string,
+  profileName: string,
+  args: string[]
+): Promise<void> {
   // 1. Read settings to get API key
   const settingsPath = getSettingsPath(profileName);
   const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
@@ -705,7 +746,7 @@ async function execClaudeWithProxy(claudeCli: string, profileName: string, args:
   const proxyArgs = verbose ? ['--verbose'] : [];
   // Use process.execPath for Windows compatibility (CVE-2024-27980)
   const proxy = spawn(process.execPath, [proxyPath, ...proxyArgs], {
-    stdio: ['ignore', 'pipe', verbose ? 'pipe' : 'inherit']
+    stdio: ['ignore', 'pipe', verbose ? 'pipe' : 'inherit'],
   });
 
   // 3. Wait for proxy ready signal (with timeout)
@@ -765,7 +806,7 @@ async function execClaudeWithProxy(claudeCli: string, profileName: string, args:
   const envVars: NodeJS.ProcessEnv = {
     ANTHROPIC_BASE_URL: `http://127.0.0.1:${port}`,
     ANTHROPIC_AUTH_TOKEN: apiKey,
-    ANTHROPIC_MODEL: 'glm-4.6'
+    ANTHROPIC_MODEL: 'glm-4.6',
   };
 
   const isWindows = process.platform === 'win32';
@@ -779,13 +820,13 @@ async function execClaudeWithProxy(claudeCli: string, profileName: string, args:
       stdio: 'inherit',
       windowsHide: true,
       shell: true,
-      env
+      env,
     });
   } else {
     claude = spawn(claudeCli, args, {
       stdio: 'inherit',
       windowsHide: true,
-      env
+      env,
     });
   }
 
@@ -1019,7 +1060,7 @@ async function main(): Promise<void> {
 }
 
 // Run main
-main().catch(error => {
+main().catch((error) => {
   console.error('Fatal error:', error.message);
   process.exit(1);
 });

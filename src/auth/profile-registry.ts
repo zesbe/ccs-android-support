@@ -49,7 +49,7 @@ export class ProfileRegistry {
       return {
         version: '2.0.0',
         profiles: {},
-        default: null
+        default: null,
       };
     }
 
@@ -103,7 +103,7 @@ export class ProfileRegistry {
     data.profiles[name] = {
       type: metadata.type || 'account',
       created: metadata.created || new Date().toISOString(),
-      last_used: metadata.last_used || null
+      last_used: metadata.last_used || null,
     };
 
     // Note: No longer auto-set as default
@@ -138,7 +138,7 @@ export class ProfileRegistry {
 
     data.profiles[name] = {
       ...data.profiles[name],
-      ...updates
+      ...updates,
     };
 
     this._write(data);
@@ -217,7 +217,7 @@ export class ProfileRegistry {
    */
   touchProfile(name: string): void {
     this.updateProfile(name, {
-      last_used: new Date().toISOString()
+      last_used: new Date().toISOString(),
     });
   }
 }

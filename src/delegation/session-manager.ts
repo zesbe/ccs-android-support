@@ -56,7 +56,7 @@ class SessionManager {
       lastTurnTime: Date.now(),
       totalCost: sessionData.totalCost || 0,
       turns: 1,
-      cwd: sessionData.cwd || process.cwd()
+      cwd: sessionData.cwd || process.cwd(),
     };
 
     this.saveSessions(sessions);
@@ -80,8 +80,13 @@ class SessionManager {
       this.saveSessions(sessions);
 
       if (process.env.CCS_DEBUG) {
-        const cost = sessions[key].totalCost !== undefined && sessions[key].totalCost !== null ? sessions[key].totalCost.toFixed(4) : '0.0000';
-        console.error(`[i] Updated session: ${sessionId}, total: $${cost}, turns: ${sessions[key].turns}`);
+        const cost =
+          sessions[key].totalCost !== undefined && sessions[key].totalCost !== null
+            ? sessions[key].totalCost.toFixed(4)
+            : '0.0000';
+        console.error(
+          `[i] Updated session: ${sessionId}, total: $${cost}, turns: ${sessions[key].turns}`
+        );
       }
     }
   }
@@ -114,7 +119,7 @@ class SessionManager {
     const maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
 
     let cleaned = 0;
-    Object.keys(sessions).forEach(key => {
+    Object.keys(sessions).forEach((key) => {
       if (now - sessions[key].lastTurnTime > maxAge) {
         delete sessions[key];
         cleaned++;
@@ -156,11 +161,7 @@ class SessionManager {
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
       }
-      fs.writeFileSync(
-        this.sessionsPath,
-        JSON.stringify(sessions, null, 2),
-        { mode: 0o600 }
-      );
+      fs.writeFileSync(this.sessionsPath, JSON.stringify(sessions, null, 2), { mode: 0o600 });
     } catch (error) {
       console.error(`[!] Failed to save sessions: ${(error as Error).message}`);
     }

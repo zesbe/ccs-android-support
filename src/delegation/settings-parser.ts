@@ -57,7 +57,7 @@ class SettingsParser {
 
     return {
       allowedTools: allowed,
-      disallowedTools: denied
+      disallowedTools: denied,
     };
   }
 
@@ -78,17 +78,11 @@ class SettingsParser {
     // Merge permissions (local overrides shared)
     return {
       permissions: {
-        allow: [
-          ...(shared.permissions?.allow || []),
-          ...(local.permissions?.allow || [])
-        ],
-        deny: [
-          ...(shared.permissions?.deny || []),
-          ...(local.permissions?.deny || [])
-        ],
+        allow: [...(shared.permissions?.allow || []), ...(local.permissions?.allow || [])],
+        deny: [...(shared.permissions?.deny || []), ...(local.permissions?.deny || [])],
         // Local defaultMode takes priority over shared
-        defaultMode: local.permissions?.defaultMode || shared.permissions?.defaultMode || undefined
-      }
+        defaultMode: local.permissions?.defaultMode || shared.permissions?.defaultMode || undefined,
+      },
     };
   }
 

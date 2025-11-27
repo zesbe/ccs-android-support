@@ -29,16 +29,19 @@ export function detectClaudeCli(): string | null {
     const result = execSync(cmd, {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'ignore'],
-      timeout: 5000  // 5 second timeout to prevent hangs
+      timeout: 5000, // 5 second timeout to prevent hangs
     }).trim();
 
     // where.exe may return multiple lines (all matches in PATH order)
-    const matches = result.split('\n').map(p => p.trim()).filter(p => p);
+    const matches = result
+      .split('\n')
+      .map((p) => p.trim())
+      .filter((p) => p);
 
     if (isWindows) {
       // On Windows, prefer executables with extensions (.exe, .cmd, .bat)
       // where.exe often returns file without extension first, then the actual .cmd wrapper
-      const withExtension = matches.find(p => /\.(exe|cmd|bat|ps1)$/i.test(p));
+      const withExtension = matches.find((p) => /\.(exe|cmd|bat|ps1)$/i.test(p));
       const claudePath = withExtension || matches[0];
 
       if (claudePath && fs.existsSync(claudePath)) {
@@ -77,7 +80,7 @@ export function getClaudeCliInfo(): ClaudeCliInfo | null {
   return {
     path: claudePath,
     isWindows,
-    needsShell
+    needsShell,
   };
 }
 

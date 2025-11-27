@@ -42,11 +42,7 @@ export class DelegationHandler {
       this._validateProfile(parsed.profile);
 
       // 4. Execute via HeadlessExecutor
-      const result = await HeadlessExecutor.execute(
-        parsed.profile,
-        parsed.prompt,
-        parsed.options
-      );
+      const result = await HeadlessExecutor.execute(parsed.profile, parsed.prompt, parsed.options);
 
       // 5. Format and display results
       const formatted = ResultFormatter.format(result);
@@ -81,15 +77,11 @@ export class DelegationHandler {
     }
 
     // Execute with resume flag
-    const result = await HeadlessExecutor.execute(
-      baseProfile,
-      parsed.prompt,
-      {
-        ...parsed.options,
-        resumeSession: true,
-        sessionId: lastSession.sessionId
-      }
-    );
+    const result = await HeadlessExecutor.execute(baseProfile, parsed.prompt, {
+      ...parsed.options,
+      resumeSession: true,
+      sessionId: lastSession.sessionId,
+    });
 
     const formatted = ResultFormatter.format(result);
     console.log(formatted);
@@ -178,7 +170,7 @@ export class DelegationHandler {
     const options: ParsedArgs['options'] = {
       cwd,
       outputFormat: 'stream-json',
-      permissionMode: defaultPermissionMode
+      permissionMode: defaultPermissionMode,
     };
 
     // Parse permission-mode (CLI flag overrides settings file)
