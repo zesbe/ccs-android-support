@@ -7,32 +7,346 @@
  * and cost-optimized delegation.
  */
 
-import { spawn, ChildProcess } from 'child_process';
+import { spawn, ChildProcess, spawnSync } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as os from 'os';
 import { colored } from './utils/helpers';
 import { detectClaudeCli } from './utils/claude-detector';
-import { getSettingsPath } from './utils/config-manager';
+import { getSettingsPath, getConfigPath } from './utils/config-manager';
 import { ErrorManager } from './utils/error-manager';
-
-// Import extracted command handlers
-import { handleVersionCommand } from './commands/version-command';
 import { handleHelpCommand } from './commands/help-command';
-import { handleInstallCommand, handleUninstallCommand } from './commands/install-command';
-import { handleDoctorCommand } from './commands/doctor-command';
-import { handleSyncCommand } from './commands/sync-command';
-import { handleShellCompletionCommand } from './commands/shell-completion-command';
-
-// Import extracted utility functions
-import { execClaude, escapeShellArg } from './utils/shell-executor';
-import { detectInstallationMethod, detectPackageManager } from './utils/package-manager-detector';
 
 // Version (sync with package.json)
 const CCS_VERSION = JSON.parse(
   fs.readFileSync(path.join(__dirname, '../package.json'), 'utf8')
 ).version;
 
-// ========== Profile Detection ==========
+// ========== Helper Functions ==========
+
+/**
+ * Escape arguments for shell execution (Windows compatibility)
+ */
+function escapeShellArg(arg: string): string {
+  return '"' + String(arg).replace(/"/g, '""') + '"';
+}
+
+/**
+ * Execute Claude CLI with unified spawn logic
+ */
+function execClaude(
+  claudeCli: string,
+  args: string[],
+  envVars: NodeJS.ProcessEnv | null = null
+): void {
+  const isWindows = process.platform === 'win32';
+  const needsShell = isWindows && /\.(cmd|bat|ps1)$/i.test(claudeCli);
+
+  // Prepare environment (merge with process.env if envVars provided)
+  const env = envVars ? { ...process.env, ...envVars } : process.env;
+
+  let child: ChildProcess;
+  if (needsShell) {
+    // When shell needed: concatenate into string to avoid DEP0190 warning
+    const cmdString = [claudeCli, ...args].map(escapeShellArg).join(' ');
+    child = spawn(cmdString, {
+      stdio: 'inherit',
+      windowsHide: true,
+      shell: true,
+      env,
+    });
+  } else {
+    // When no shell needed: use array form (faster, no shell overhead)
+    child = spawn(claudeCli, args, {
+      stdio: 'inherit',
+      windowsHide: true,
+      env,
+    });
+  }
+
+  child.on('exit', (code, signal) => {
+    if (signal) process.kill(process.pid, signal as NodeJS.Signals);
+    else process.exit(code || 0);
+  });
+
+  child.on('error', () => {
+    ErrorManager.showClaudeNotFound();
+    process.exit(1);
+  });
+}
+
+// ========== Command Handlers ==========
+
+/**
+ * Handle version command
+ */
+function handleVersionCommand(): void {
+  console.log(colored(`CCS (Claude Code Switch) v${CCS_VERSION}`, 'bold'));
+  console.log('');
+
+  console.log(colored('Installation:', 'cyan'));
+  const installLocation = process.argv[1] || '(not found)';
+  console.log(`  ${colored('Location:'.padEnd(17), 'cyan')} ${installLocation}`);
+
+  const ccsDir = path.join(os.homedir(), '.ccs');
+  console.log(`  ${colored('CCS Directory:'.padEnd(17), 'cyan')} ${ccsDir}`);
+
+  const configPath = getConfigPath();
+  console.log(`  ${colored('Config:'.padEnd(17), 'cyan')} ${configPath}`);
+
+  const profilesJson = path.join(os.homedir(), '.ccs', 'profiles.json');
+  console.log(`  ${colored('Profiles:'.padEnd(17), 'cyan')} ${profilesJson}`);
+
+  // Delegation status
+  const delegationSessionsPath = path.join(os.homedir(), '.ccs', 'delegation-sessions.json');
+  const delegationConfigured = fs.existsSync(delegationSessionsPath);
+
+  const readyProfiles: string[] = [];
+
+  // Check for profiles with valid API keys
+  for (const profile of ['glm', 'kimi']) {
+    const settingsPath = path.join(os.homedir(), '.ccs', `${profile}.settings.json`);
+    if (fs.existsSync(settingsPath)) {
+      try {
+        const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+        const apiKey = settings.env?.ANTHROPIC_AUTH_TOKEN;
+        if (apiKey && !apiKey.match(/YOUR_.*_API_KEY_HERE/) && !apiKey.match(/sk-test.*/)) {
+          readyProfiles.push(profile);
+        }
+      } catch (_error) {
+        // Invalid JSON, skip
+      }
+    }
+  }
+
+  const hasValidApiKeys = readyProfiles.length > 0;
+  const delegationEnabled = delegationConfigured || hasValidApiKeys;
+
+  if (delegationEnabled) {
+    console.log(`  ${colored('Delegation:'.padEnd(17), 'cyan')} Enabled`);
+  } else {
+    console.log(`  ${colored('Delegation:'.padEnd(17), 'cyan')} Not configured`);
+  }
+
+  console.log('');
+
+  if (readyProfiles.length > 0) {
+    console.log(colored('Delegation Ready:', 'cyan'));
+    console.log(
+      `  ${colored('[OK]', 'yellow')} ${readyProfiles.join(', ')} profiles are ready for delegation`
+    );
+    console.log('');
+  } else if (delegationEnabled) {
+    console.log(colored('Delegation Ready:', 'cyan'));
+    console.log(`  ${colored('[!]', 'yellow')} Delegation configured but no valid API keys found`);
+    console.log('');
+  }
+
+  console.log(`${colored('Documentation:', 'cyan')} https://github.com/kaitranntt/ccs`);
+  console.log(`${colored('License:', 'cyan')} MIT`);
+  console.log('');
+  console.log(colored("Run 'ccs --help' for usage information", 'yellow'));
+
+  process.exit(0);
+}
+
+/**
+ * Handle help command
+ */
+
+function handleInstallCommand(): void {
+  console.log('');
+  console.log('Feature not available');
+  console.log('');
+  console.log('The --install flag is currently under development.');
+  console.log('.claude/ integration testing is not complete.');
+  console.log('');
+  console.log('For updates: https://github.com/kaitranntt/ccs/issues');
+  console.log('');
+  process.exit(0);
+}
+
+function handleUninstallCommand(): void {
+  console.log('');
+  console.log('Feature not available');
+  console.log('');
+  console.log('The --uninstall flag is currently under development.');
+  console.log('.claude/ integration testing is not complete.');
+  console.log('');
+  console.log('For updates: https://github.com/kaitranntt/ccs/issues');
+  console.log('');
+  process.exit(0);
+}
+
+async function handleDoctorCommand(): Promise<void> {
+  const DoctorModule = await import('./management/doctor');
+  const Doctor = DoctorModule.default;
+  const doctor = new Doctor();
+
+  await doctor.runAllChecks();
+
+  // Exit with error code if unhealthy
+  process.exit(doctor.isHealthy() ? 0 : 1);
+}
+
+async function handleSyncCommand(): Promise<void> {
+  console.log('');
+  console.log(colored('Syncing CCS Components...', 'cyan'));
+  console.log('');
+
+  // First, copy .claude/ directory from package to ~/.ccs/.claude/
+  const { ClaudeDirInstaller } = await import('./utils/claude-dir-installer');
+  const installer = new ClaudeDirInstaller();
+  installer.install();
+
+  console.log('');
+
+  const cleanupResult = installer.cleanupDeprecated();
+  if (cleanupResult.success && cleanupResult.cleanedFiles.length > 0) {
+    console.log('');
+  }
+
+  // Then, create symlinks from ~/.ccs/.claude/ to ~/.claude/
+  const { ClaudeSymlinkManager } = await import('./utils/claude-symlink-manager');
+  const manager = new ClaudeSymlinkManager();
+  manager.install(false);
+
+  console.log('');
+  console.log(colored('[OK] Sync complete!', 'green'));
+  console.log('');
+
+  process.exit(0);
+}
+
+/**
+ * Detect installation method
+ */
+function detectInstallationMethod(): 'npm' | 'direct' {
+  const scriptPath = process.argv[1];
+
+  // Method 1: Check if script is inside node_modules
+  if (scriptPath.includes('node_modules')) {
+    return 'npm';
+  }
+
+  // Method 2: Check if script is in npm global bin directory
+  const npmGlobalBinPatterns = [
+    /\.npm\/global\/bin\//,
+    /\/\.nvm\/versions\/node\/[^/]+\/bin\//,
+    /\/usr\/local\/bin\//,
+    /\/usr\/bin\//,
+  ];
+
+  for (const pattern of npmGlobalBinPatterns) {
+    if (pattern.test(scriptPath)) {
+      try {
+        const binDir = path.dirname(scriptPath);
+        const nodeModulesDir = path.join(binDir, '..', 'lib', 'node_modules', '@kaitranntt', 'ccs');
+        const globalModulesDir = path.join(binDir, '..', 'node_modules', '@kaitranntt', 'ccs');
+
+        if (fs.existsSync(nodeModulesDir) || fs.existsSync(globalModulesDir)) {
+          return 'npm';
+        }
+      } catch (_err) {
+        // Continue checking other patterns
+      }
+    }
+  }
+
+  // Method 3: Check if package.json exists in parent directory
+  const packageJsonPath = path.join(__dirname, '..', 'package.json');
+
+  if (fs.existsSync(packageJsonPath)) {
+    try {
+      const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+      if (pkg.name === '@kaitranntt/ccs') {
+        return 'npm';
+      }
+    } catch (_err) {
+      // Ignore parse errors
+    }
+  }
+
+  // Method 4: Check if script is a symlink pointing to node_modules
+  try {
+    const stats = fs.lstatSync(scriptPath);
+    if (stats.isSymbolicLink()) {
+      const targetPath = fs.readlinkSync(scriptPath);
+      if (targetPath.includes('node_modules') || targetPath.includes('@kaitranntt/ccs')) {
+        return 'npm';
+      }
+    }
+  } catch (_err) {
+    // Continue to default
+  }
+
+  return 'direct';
+}
+
+/**
+ * Detect which package manager was used for installation
+ */
+function detectPackageManager(): 'npm' | 'yarn' | 'pnpm' | 'bun' {
+  const scriptPath = process.argv[1];
+
+  // Check if script path contains package manager indicators
+  if (scriptPath.includes('.pnpm')) return 'pnpm';
+  if (scriptPath.includes('yarn')) return 'yarn';
+  if (scriptPath.includes('bun')) return 'bun';
+
+  // Check parent directories for lock files
+  const binDir = path.dirname(scriptPath);
+
+  let checkDir = binDir;
+  for (let i = 0; i < 5; i++) {
+    if (fs.existsSync(path.join(checkDir, 'pnpm-lock.yaml'))) return 'pnpm';
+    if (fs.existsSync(path.join(checkDir, 'yarn.lock'))) return 'yarn';
+    if (fs.existsSync(path.join(checkDir, 'bun.lockb'))) return 'bun';
+    checkDir = path.dirname(checkDir);
+  }
+
+  // Check if package managers are available on the system
+  try {
+    const yarnResult = spawnSync('yarn', ['global', 'list', '--pattern', '@kaitranntt/ccs'], {
+      encoding: 'utf8',
+      shell: true,
+      timeout: 5000,
+    });
+    if (yarnResult.status === 0 && yarnResult.stdout.includes('@kaitranntt/ccs')) {
+      return 'yarn';
+    }
+  } catch (_err) {
+    // Continue to next check
+  }
+
+  try {
+    const pnpmResult = spawnSync('pnpm', ['list', '-g', '--pattern', '@kaitranntt/ccs'], {
+      encoding: 'utf8',
+      shell: true,
+      timeout: 5000,
+    });
+    if (pnpmResult.status === 0 && pnpmResult.stdout.includes('@kaitranntt/ccs')) {
+      return 'pnpm';
+    }
+  } catch (_err) {
+    // Continue to next check
+  }
+
+  try {
+    const bunResult = spawnSync('bun', ['pm', 'ls', '-g', '--pattern', '@kaitranntt/ccs'], {
+      encoding: 'utf8',
+      shell: true,
+      timeout: 5000,
+    });
+    if (bunResult.status === 0 && bunResult.stdout.includes('@kaitranntt/ccs')) {
+      return 'bun';
+    }
+  } catch (_err) {
+    // Continue to default
+  }
+
+  return 'npm';
+}
 
 async function handleUpdateCommand(): Promise<void> {
   const { checkForUpdates } = await import('./utils/update-checker');
@@ -431,6 +745,58 @@ async function execClaudeWithProxy(
     proxy.kill('SIGTERM');
     claude.kill('SIGTERM');
   });
+}
+
+/**
+ * Handle shell completion installation
+ */
+async function handleShellCompletionCommand(args: string[]): Promise<void> {
+  const { ShellCompletionInstaller } = await import('./utils/shell-completion');
+
+  console.log(colored('Shell Completion Installer', 'bold'));
+  console.log('');
+
+  // Parse flags
+  let targetShell: string | null = null;
+  if (args.includes('--bash')) targetShell = 'bash';
+  else if (args.includes('--zsh')) targetShell = 'zsh';
+  else if (args.includes('--fish')) targetShell = 'fish';
+  else if (args.includes('--powershell')) targetShell = 'powershell';
+
+  try {
+    const installer = new ShellCompletionInstaller();
+    const result = installer.install(targetShell as 'bash' | 'zsh' | 'fish' | 'powershell' | null);
+
+    if (result.alreadyInstalled) {
+      console.log(colored('[OK] Shell completion already installed', 'green'));
+      console.log('');
+      return;
+    }
+
+    console.log(colored('[OK] Shell completion installed successfully!', 'green'));
+    console.log('');
+    console.log(result.message);
+    console.log('');
+    console.log(colored('To activate:', 'cyan'));
+    console.log(`  ${result.reload}`);
+    console.log('');
+    console.log(colored('Then test:', 'cyan'));
+    console.log('  ccs <TAB>        # See available profiles');
+    console.log('  ccs auth <TAB>   # See auth subcommands');
+    console.log('');
+  } catch (error) {
+    const err = error as Error;
+    console.error(colored('[X] Error:', 'red'), err.message);
+    console.error('');
+    console.error(colored('Usage:', 'yellow'));
+    console.error('  ccs --shell-completion           # Auto-detect shell');
+    console.error('  ccs --shell-completion --bash    # Install for bash');
+    console.error('  ccs --shell-completion --zsh     # Install for zsh');
+    console.error('  ccs --shell-completion --fish    # Install for fish');
+    console.error('  ccs --shell-completion --powershell  # Install for PowerShell');
+    console.error('');
+    process.exit(1);
+  }
 }
 
 // ========== Main Execution ==========
