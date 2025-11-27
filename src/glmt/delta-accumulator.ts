@@ -346,4 +346,137 @@ export class DeltaAccumulator {
       }
     };
   }
+
+  // ========== State Getters ==========
+
+  /**
+   * Check if message has been finalized
+   */
+  isFinalized(): boolean {
+    return this.finalized;
+  }
+
+  /**
+   * Check if message has started
+   */
+  isMessageStarted(): boolean {
+    return this.messageStarted;
+  }
+
+  /**
+   * Get message ID
+   */
+  getMessageId(): string {
+    return this.messageId;
+  }
+
+  /**
+   * Get model name
+   */
+  getModel(): string | null {
+    return this.model;
+  }
+
+  /**
+   * Get role
+   */
+  getRole(): string {
+    return this.role;
+  }
+
+  /**
+   * Get input tokens
+   */
+  getInputTokens(): number {
+    return this.inputTokens;
+  }
+
+  /**
+   * Get output tokens
+   */
+  getOutputTokens(): number {
+    return this.outputTokens;
+  }
+
+  // ========== State Setters ==========
+
+  /**
+   * Set model name
+   */
+  setModel(model: string): void {
+    this.model = model;
+  }
+
+  /**
+   * Set message started flag
+   */
+  setMessageStarted(started: boolean): void {
+    this.messageStarted = started;
+  }
+
+  /**
+   * Set role
+   */
+  setRole(role: string): void {
+    this.role = role;
+  }
+
+  /**
+   * Set finalized flag
+   */
+  setFinalized(finalized: boolean): void {
+    this.finalized = finalized;
+  }
+
+  // ========== Finish Reason ==========
+
+  private finishReason: string | null = null;
+  private usageReceived: boolean = false;
+
+  /**
+   * Set finish reason
+   */
+  setFinishReason(reason: string): void {
+    this.finishReason = reason;
+  }
+
+  /**
+   * Get finish reason
+   */
+  getFinishReason(): string | null {
+    return this.finishReason;
+  }
+
+  /**
+   * Check if usage stats have been received
+   */
+  hasUsageReceived(): boolean {
+    return this.usageReceived;
+  }
+
+  /**
+   * Mark usage as received
+   */
+  setUsageReceived(received: boolean): void {
+    this.usageReceived = received;
+  }
+
+  // ========== Tool Call Helpers ==========
+
+  /**
+   * Check if there are any tool calls, or check if a specific index exists
+   */
+  hasToolCall(index?: number): boolean {
+    if (index === undefined) {
+      return this.toolCalls.length > 0;
+    }
+    return this.toolCallsIndex[index] !== undefined;
+  }
+
+  /**
+   * Get tool call by index
+   */
+  getToolCall(index: number): ToolCall | undefined {
+    return this.toolCallsIndex[index];
+  }
 }
