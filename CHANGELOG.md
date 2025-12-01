@@ -1,3 +1,10 @@
+## [5.1.1-beta.3](https://github.com/kaitranntt/ccs/compare/v5.1.1-beta.2...v5.1.1-beta.3) (2025-12-01)
+
+
+### Bug Fixes
+
+* **glmt:** handle 401 errors and headers-already-sent exception ([#30](https://github.com/kaitranntt/ccs/issues/30)) ([c953382](https://github.com/kaitranntt/ccs/commit/c95338232a37981b95b785b47185ce18d6d94b7a)), closes [#26](https://github.com/kaitranntt/ccs/issues/26)
+
 ## [5.1.1-beta.2](https://github.com/kaitranntt/ccs/compare/v5.1.1-beta.1...v5.1.1-beta.2) (2025-12-01)
 
 
