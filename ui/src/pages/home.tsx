@@ -67,7 +67,7 @@ export function HomePage() {
           </Button>
           <Button variant="outline" asChild>
             <a
-              href="https://github.com/anthropics/claude-cli"
+              href="https://github.com/kaitranntt/ccs"
               target="_blank"
               rel="noopener noreferrer"
             >
