@@ -23,6 +23,7 @@ import {
   isCLIProxyInstalled,
   getCLIProxyPath,
 } from '../cliproxy';
+import { getAllAuthStatus, getOAuthConfig } from '../cliproxy/auth-handler';
 import { CLIPROXY_FALLBACK_VERSION } from '../cliproxy/platform-detector';
 import { CLIPROXY_PROFILES, CLIProxyProfileName } from '../auth/profile-detector';
 import { getCcsDir, getConfigPath, loadConfig } from '../utils/config-manager';
@@ -354,50 +355,60 @@ async function handleCreate(args: string[]): Promise<void> {
 async function handleList(): Promise<void> {
   await initUI();
 
-  console.log(header('CLIProxy Variants'));
+  console.log(header('CLIProxy Profiles'));
   console.log('');
 
   try {
+    // Show auth status for built-in profiles
+    console.log(subheader('Built-in Profiles'));
+    const authStatuses = getAllAuthStatus();
+
+    for (const status of authStatuses) {
+      const oauthConfig = getOAuthConfig(status.provider);
+      const icon = status.authenticated ? ok('') : warn('');
+      const authLabel = status.authenticated ? color('authenticated', 'success') : dim('not authenticated');
+      const lastAuthStr = status.lastAuth
+        ? dim(` (${status.lastAuth.toLocaleDateString()})`)
+        : '';
+
+      console.log(`  ${icon} ${color(status.provider, 'command').padEnd(18)} ${oauthConfig.displayName.padEnd(16)} ${authLabel}${lastAuthStr}`);
+    }
+    console.log('');
+    console.log(dim('  To authenticate: ccs <provider> --auth'));
+    console.log(dim('  To logout:       ccs <provider> --logout'));
+    console.log('');
+
+    // Show custom variants if any
     const config = loadConfig();
     const variants = config.cliproxy || {};
     const variantNames = Object.keys(variants);
 
-    if (variantNames.length === 0) {
-      console.log(warn('No CLIProxy variants configured'));
+    if (variantNames.length > 0) {
+      console.log(subheader('Custom Variants'));
+
+      // Build table data
+      const rows: string[][] = variantNames.map((name) => {
+        const variant = variants[name] as { provider: string; settings: string };
+        return [name, variant.provider, variant.settings];
+      });
+
+      // Print table
+      console.log(
+        table(rows, {
+          head: ['Variant', 'Provider', 'Settings'],
+          colWidths: [15, 12, 35],
+        })
+      );
       console.log('');
-      console.log('Built-in CLIProxy profiles:');
-      CLIPROXY_PROFILES.forEach((p) => console.log(`  ${color(p, 'command')}`));
+      console.log(dim(`Total: ${variantNames.length} custom variant(s)`));
       console.log('');
-      console.log('To create a custom variant:');
-      console.log(`  ${color('ccs cliproxy create', 'command')}`);
-      console.log('');
-      return;
     }
 
-    // Build table data
-    const rows: string[][] = variantNames.map((name) => {
-      const variant = variants[name] as { provider: string; settings: string };
-      return [name, variant.provider, variant.settings];
-    });
-
-    // Print table
-    console.log(
-      table(rows, {
-        head: ['Variant', 'Provider', 'Settings'],
-        colWidths: [15, 12, 35],
-      })
-    );
-    console.log('');
-
-    // Show built-in profiles
-    console.log(subheader('Built-in Profiles'));
-    console.log(`  ${CLIPROXY_PROFILES.join(', ')}`);
-    console.log('');
-
-    console.log(dim(`Total: ${variantNames.length} custom variant(s)`));
+    console.log(dim('To create a custom variant:'));
+    console.log(`  ${color('ccs cliproxy create', 'command')}`);
     console.log('');
   } catch (error) {
-    console.log(fail(`Failed to list variants: ${(error as Error).message}`));
+    console.log(fail(`Failed to list profiles: ${(error as Error).message}`));
     process.exit(1);
   }
 }

@@ -51,6 +51,14 @@ export interface CreateVariant {
   model?: string;
 }
 
+export interface AuthStatus {
+  provider: string;
+  displayName: string;
+  authenticated: boolean;
+  lastAuth: string | null;
+  tokenFiles: number;
+}
+
 export interface Account {
   name: string;
   type?: string;
@@ -76,6 +84,7 @@ export const api = {
   },
   cliproxy: {
     list: () => request<{ variants: Variant[] }>('/cliproxy'),
+    auth: () => request<{ authStatus: AuthStatus[] }>('/cliproxy/auth'),
     create: (data: CreateVariant) =>
       request('/cliproxy', {
         method: 'POST',

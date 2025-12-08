@@ -11,6 +11,7 @@ import { getCcsDir, getConfigPath, loadConfig, loadSettings } from '../utils/con
 import { Config, Settings } from '../types/config';
 import { expandPath } from '../utils/helpers';
 import { runHealthChecks, fixHealthIssue } from './health-service';
+import { getAllAuthStatus, getOAuthConfig } from '../cliproxy/auth-handler';
 
 export const apiRoutes = Router();
 
@@ -291,6 +292,26 @@ apiRoutes.delete('/cliproxy/:name', (req: Request, res: Response): void => {
   writeConfig(config);
 
   res.json({ name, deleted: true });
+});
+
+/**
+ * GET /api/cliproxy/auth - Get auth status for built-in CLIProxy profiles
+ */
+apiRoutes.get('/cliproxy/auth', (_req: Request, res: Response) => {
+  const statuses = getAllAuthStatus();
+
+  const authStatus = statuses.map((status) => {
+    const oauthConfig = getOAuthConfig(status.provider);
+    return {
+      provider: status.provider,
+      displayName: oauthConfig.displayName,
+      authenticated: status.authenticated,
+      lastAuth: status.lastAuth?.toISOString() || null,
+      tokenFiles: status.tokenFiles.length,
+    };
+  });
+
+  res.json({ authStatus });
 });
 
 // ==================== Settings (Phase 05) ====================

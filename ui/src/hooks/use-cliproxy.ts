@@ -14,6 +14,13 @@ export function useCliproxy() {
   });
 }
 
+export function useCliproxyAuth() {
+  return useQuery({
+    queryKey: ['cliproxy-auth'],
+    queryFn: () => api.cliproxy.auth(),
+  });
+}
+
 export function useCreateVariant() {
   const queryClient = useQueryClient();
 
