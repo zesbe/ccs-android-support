@@ -370,32 +370,53 @@ async function handleCreate(args: string[]): Promise<void> {
   const defaultModel = 'claude-sonnet-4-5-20250929';
   let model = parsedArgs.model;
   if (!model && !parsedArgs.yes) {
-    model = await InteractivePrompt.input('Default model', {
+    model = await InteractivePrompt.input('Default model (ANTHROPIC_MODEL)', {
       default: defaultModel,
     });
   }
   model = model || defaultModel;
 
-  // Step 5: Optional model mapping for Opus/Sonnet/Haiku
-  // Ask user if they want different models for each type
+  // Step 5: Model mapping for Opus/Sonnet/Haiku
+  // Auto-show if user entered a custom model, otherwise ask
   let opusModel = model;
   let sonnetModel = model;
   let haikuModel = model;
 
+  const isCustomModel = model !== defaultModel;
+
   if (!parsedArgs.yes) {
-    console.log('');
-    console.log(dim('Some API proxies route different model types to different backends.'));
-    const wantCustomMapping = await InteractivePrompt.confirm(
-      'Configure different models for Opus/Sonnet/Haiku?',
-      { default: false }
-    );
+    // If user entered custom model, auto-prompt for model mapping
+    // Otherwise, ask if they want to configure it
+    let wantCustomMapping = isCustomModel;
+
+    if (!isCustomModel) {
+      console.log('');
+      console.log(dim('Some API proxies route different model types to different backends.'));
+      wantCustomMapping = await InteractivePrompt.confirm(
+        'Configure different models for Opus/Sonnet/Haiku?',
+        { default: false }
+      );
+    }
 
     if (wantCustomMapping) {
       console.log('');
-      console.log(dim('Leave blank to use the default model for each.'));
-      opusModel = (await InteractivePrompt.input('Opus model', { default: model })) || model;
-      sonnetModel = (await InteractivePrompt.input('Sonnet model', { default: model })) || model;
-      haikuModel = (await InteractivePrompt.input('Haiku model', { default: model })) || model;
+      if (isCustomModel) {
+        console.log(dim('Configure model IDs for each tier (defaults to your model):'));
+      } else {
+        console.log(dim('Leave blank to use the default model for each.'));
+      }
+      opusModel =
+        (await InteractivePrompt.input('Opus model (ANTHROPIC_DEFAULT_OPUS_MODEL)', {
+          default: model,
+        })) || model;
+      sonnetModel =
+        (await InteractivePrompt.input('Sonnet model (ANTHROPIC_DEFAULT_SONNET_MODEL)', {
+          default: model,
+        })) || model;
+      haikuModel =
+        (await InteractivePrompt.input('Haiku model (ANTHROPIC_DEFAULT_HAIKU_MODEL)', {
+          default: model,
+        })) || model;
     }
   }
 

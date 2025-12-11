@@ -77,17 +77,34 @@ function isConfigured(profileName: string, config: Config): boolean {
   }
 }
 
+/** Model mapping for API profiles */
+interface ModelMapping {
+  model?: string;
+  opusModel?: string;
+  sonnetModel?: string;
+  haikuModel?: string;
+}
+
 /**
  * Helper: Create settings file for profile
  */
-function createSettingsFile(name: string, baseUrl: string, apiKey: string, model?: string): string {
+function createSettingsFile(
+  name: string,
+  baseUrl: string,
+  apiKey: string,
+  models: ModelMapping = {}
+): string {
   const settingsPath = path.join(getCcsDir(), `${name}.settings.json`);
+  const { model, opusModel, sonnetModel, haikuModel } = models;
 
   const settings: Settings = {
     env: {
       ANTHROPIC_BASE_URL: baseUrl,
       ANTHROPIC_AUTH_TOKEN: apiKey,
       ...(model && { ANTHROPIC_MODEL: model }),
+      ...(opusModel && { ANTHROPIC_DEFAULT_OPUS_MODEL: opusModel }),
+      ...(sonnetModel && { ANTHROPIC_DEFAULT_SONNET_MODEL: sonnetModel }),
+      ...(haikuModel && { ANTHROPIC_DEFAULT_HAIKU_MODEL: haikuModel }),
     },
   };
 
@@ -100,7 +117,14 @@ function createSettingsFile(name: string, baseUrl: string, apiKey: string, model
  */
 function updateSettingsFile(
   name: string,
-  updates: { baseUrl?: string; apiKey?: string; model?: string }
+  updates: {
+    baseUrl?: string;
+    apiKey?: string;
+    model?: string;
+    opusModel?: string;
+    sonnetModel?: string;
+    haikuModel?: string;
+  }
 ): void {
   const settingsPath = path.join(getCcsDir(), `${name}.settings.json`);
 
@@ -126,6 +150,34 @@ function updateSettingsFile(
       settings.env.ANTHROPIC_MODEL = updates.model;
     } else {
       delete settings.env.ANTHROPIC_MODEL;
+    }
+  }
+
+  // Handle model mapping fields
+  if (updates.opusModel !== undefined) {
+    settings.env = settings.env || {};
+    if (updates.opusModel) {
+      settings.env.ANTHROPIC_DEFAULT_OPUS_MODEL = updates.opusModel;
+    } else {
+      delete settings.env.ANTHROPIC_DEFAULT_OPUS_MODEL;
+    }
+  }
+
+  if (updates.sonnetModel !== undefined) {
+    settings.env = settings.env || {};
+    if (updates.sonnetModel) {
+      settings.env.ANTHROPIC_DEFAULT_SONNET_MODEL = updates.sonnetModel;
+    } else {
+      delete settings.env.ANTHROPIC_DEFAULT_SONNET_MODEL;
+    }
+  }
+
+  if (updates.haikuModel !== undefined) {
+    settings.env = settings.env || {};
+    if (updates.haikuModel) {
+      settings.env.ANTHROPIC_DEFAULT_HAIKU_MODEL = updates.haikuModel;
+    } else {
+      delete settings.env.ANTHROPIC_DEFAULT_HAIKU_MODEL;
     }
   }
 
@@ -166,7 +218,7 @@ apiRoutes.get('/profiles', (_req: Request, res: Response) => {
  * POST /api/profiles - Create new profile
  */
 apiRoutes.post('/profiles', (req: Request, res: Response): void => {
-  const { name, baseUrl, apiKey, model } = req.body;
+  const { name, baseUrl, apiKey, model, opusModel, sonnetModel, haikuModel } = req.body;
 
   if (!name || !baseUrl || !apiKey) {
     res.status(400).json({ error: 'Missing required fields: name, baseUrl, apiKey' });
@@ -185,8 +237,13 @@ apiRoutes.post('/profiles', (req: Request, res: Response): void => {
     fs.mkdirSync(getCcsDir(), { recursive: true });
   }
 
-  // Create settings file
-  const settingsPath = createSettingsFile(name, baseUrl, apiKey, model);
+  // Create settings file with model mapping
+  const settingsPath = createSettingsFile(name, baseUrl, apiKey, {
+    model,
+    opusModel,
+    sonnetModel,
+    haikuModel,
+  });
 
   // Update config
   config.profiles[name] = settingsPath;
@@ -200,7 +257,7 @@ apiRoutes.post('/profiles', (req: Request, res: Response): void => {
  */
 apiRoutes.put('/profiles/:name', (req: Request, res: Response): void => {
   const { name } = req.params;
-  const { baseUrl, apiKey, model } = req.body;
+  const { baseUrl, apiKey, model, opusModel, sonnetModel, haikuModel } = req.body;
 
   const config = readConfigSafe();
 
@@ -210,7 +267,7 @@ apiRoutes.put('/profiles/:name', (req: Request, res: Response): void => {
   }
 
   try {
-    updateSettingsFile(name, { baseUrl, apiKey, model });
+    updateSettingsFile(name, { baseUrl, apiKey, model, opusModel, sonnetModel, haikuModel });
     res.json({ name, updated: true });
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
