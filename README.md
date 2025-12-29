@@ -193,6 +193,35 @@ Without Developer Mode, CCS falls back to copying directories.
 
 </details>
 
+<details>
+<summary>Android (Termux) Support</summary>
+
+CCS now supports Android via Termux using `proot-distro`.
+
+**Prerequisites:**
+1. Install Termux from F-Droid (Google Play version is outdated).
+2. Install dependencies:
+   ```bash
+   pkg install proot-distro
+   proot-distro install debian
+   ```
+
+**Authentication:**
+Since Termux is headless (no browser access), you need to manually copy the OAuth URL:
+1. Run `ccs <provider> --auth` (e.g., `ccs agy --auth`).
+2. Copy the displayed URL to your phone/PC browser.
+3. Login. The callback to `localhost` will be captured by CCS automatically.
+
+**Troubleshooting:**
+If you encounter errors like `Connection refused` or `CLIProxy failed to start`:
+1. Run diagnostics:
+   ```bash
+   ccs doctor
+   ```
+2. If port 8085 is blocked, `ccs doctor` will attempt to fix it or guide you.
+
+</details>
+
 <br>
 
 ## Documentation
