@@ -23,6 +23,7 @@ const OS_MAP: Record<string, SupportedOS | undefined> = {
   darwin: 'darwin',
   linux: 'linux',
   win32: 'windows',
+  android: 'linux',
 };
 
 const ARCH_MAP: Record<string, SupportedArch | undefined> = {

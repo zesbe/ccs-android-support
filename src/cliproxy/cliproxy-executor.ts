@@ -13,6 +13,7 @@
  */
 
 import { spawn, ChildProcess } from 'child_process';
+import { spawnProxy } from '../utils/android-helper';
 import * as net from 'net';
 import { ProgressIndicator } from '../utils/progress-indicator';
 import { ok, fail, info, warn } from '../utils/ui';
@@ -316,7 +317,7 @@ export async function execClaudeWithCLIProxy(
 
   log(`Spawning: ${binaryPath} ${proxyArgs.join(' ')}`);
 
-  const proxy = spawn(binaryPath, proxyArgs, {
+  const proxy = spawnProxy(binaryPath, proxyArgs, {
     stdio: ['ignore', verbose ? 'pipe' : 'ignore', verbose ? 'pipe' : 'ignore'],
     detached: false,
   });

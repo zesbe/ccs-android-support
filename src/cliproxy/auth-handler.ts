@@ -12,7 +12,8 @@
  * Each provider has its own directory to avoid conflicts.
  */
 
-import { execSync, spawn } from 'child_process';
+import { execSync } from 'child_process';
+import { spawnProxy } from '../utils/android-helper';
 import * as fs from 'fs';
 import * as path from 'path';
 import { ProgressIndicator } from '../utils/progress-indicator';
@@ -558,7 +559,7 @@ export async function triggerOAuth(
 
   return new Promise<AccountInfo | null>((resolve) => {
     // Spawn CLIProxyAPI with auth flag (and --no-browser if headless)
-    const authProcess = spawn(binaryPath, args, {
+    const authProcess = spawnProxy(binaryPath, args, {
       stdio: ['inherit', 'pipe', 'pipe'],
       env: {
         ...process.env,

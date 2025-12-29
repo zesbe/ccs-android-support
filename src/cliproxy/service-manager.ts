@@ -11,7 +11,8 @@
  * this module manages a persistent background instance.
  */
 
-import { spawn, ChildProcess } from 'child_process';
+import { ChildProcess } from 'child_process';
+import { spawnProxy } from '../utils/android-helper';
 import * as net from 'net';
 import { ensureCLIProxyBinary } from './binary-manager';
 import {
@@ -168,7 +169,7 @@ export async function ensureCliproxyService(
 
   log(`Spawning: ${binaryPath} ${proxyArgs.join(' ')}`);
 
-  proxyProcess = spawn(binaryPath, proxyArgs, {
+  proxyProcess = spawnProxy(binaryPath, proxyArgs, {
     stdio: ['ignore', verbose ? 'pipe' : 'ignore', verbose ? 'pipe' : 'ignore'],
     detached: true, // Allow process to run independently
   });
