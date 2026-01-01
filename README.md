@@ -1,17 +1,17 @@
 <div align="center">
 
-# CCS - Claude Code Switch
+# CCS Android Support
 
 ![CCS Logo](assets/ccs-logo-medium.png)
 
-### The universal AI profile manager for Claude Code.
-Run Claude, Gemini, GLM, and any Anthropic-compatible API - concurrently, without conflicts.
+### CCS with Native Android/Termux Support
+Run Claude, Gemini, GLM, and any Anthropic-compatible API on your Android device - concurrently, without conflicts.
 
 [![License](https://img.shields.io/badge/license-MIT-C15F3C?style=for-the-badge)](LICENSE)
-[![npm](https://img.shields.io/npm/v/@kaitranntt/ccs?style=for-the-badge&logo=npm)](https://www.npmjs.com/package/@kaitranntt/ccs)
-[![PoweredBy](https://img.shields.io/badge/PoweredBy-ClaudeKit-C15F3C?style=for-the-badge)](https://claudekit.cc?ref=HMNKXOHN)
+[![npm](https://img.shields.io/npm/v/@zesbe/ccs-android?style=for-the-badge&logo=npm)](https://www.npmjs.com/package/@zesbe/ccs-android)
+[![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20Termux-3DDC84?style=for-the-badge&logo=android)](https://termux.dev)
 
-**[Features & Pricing](https://ccs.kaitran.ca)** | **[Documentation](https://docs.ccs.kaitran.ca)**
+**[Original CCS](https://ccs.kaitran.ca)** | **[Android Guide](ANDROID.md)** | **[Upstream Docs](https://docs.ccs.kaitran.ca)**
 
 </div>
 
@@ -193,34 +193,82 @@ Without Developer Mode, CCS falls back to copying directories.
 
 </details>
 
-<details>
-<summary>Android (Termux) Support</summary>
+## Android/Termux Support
 
-CCS now supports Android via Termux using `proot-distro`.
+> **This fork adds native Android platform support to CCS!**
 
-**Prerequisites:**
-1. Install Termux from F-Droid (Google Play version is outdated).
-2. Install dependencies:
+### Why This Fork?
+
+The original CCS package declares support only for `darwin`, `linux`, and `win32`. This fork adds `android` to the supported platforms, allowing direct installation on Termux without workarounds.
+
+### Quick Install (Android/Termux)
+
+```bash
+# Install directly - no --force needed!
+npm install -g @zesbe/ccs-android
+
+# Or use original package with --force
+npm install -g @kaitranntt/ccs --force
+```
+
+### Prerequisites
+
+1. **Install Termux** from [F-Droid](https://f-droid.org/packages/com.termux/) (Google Play version is outdated)
+
+2. **Setup Termux environment:**
+   ```bash
+   pkg update && pkg upgrade
+   pkg install nodejs git
+   ```
+
+3. **(Optional) For proot-distro:**
    ```bash
    pkg install proot-distro
    proot-distro install debian
    ```
 
-**Authentication:**
-Since Termux is headless (no browser access), you need to manually copy the OAuth URL:
-1. Run `ccs <provider> --auth` (e.g., `ccs agy --auth`).
-2. Copy the displayed URL to your phone/PC browser.
-3. Login. The callback to `localhost` will be captured by CCS automatically.
+### Authentication Methods
 
-**Troubleshooting:**
-If you encounter errors like `Connection refused` or `CLIProxy failed to start`:
-1. Run diagnostics:
-   ```bash
-   ccs doctor
-   ```
-2. If port 8085 is blocked, `ccs doctor` will attempt to fix it or guide you.
+Since Termux is headless (no browser), use one of these methods:
 
-</details>
+**Method 1: Manual URL Copy**
+```bash
+ccs <provider> --auth   # e.g., ccs agy --auth
+# Copy the displayed URL to your phone browser
+# Login and authorize
+```
+
+**Method 2: Termux:API (if installed)**
+```bash
+pkg install termux-api
+# CCS will auto-open URLs via termux-open-url
+```
+
+### Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| `EBADPLATFORM` error | Use `@zesbe/ccs-android` or add `--force` |
+| `Connection refused` | Run `ccs doctor` to diagnose |
+| Port 8085 blocked | `ccs doctor` will attempt auto-fix |
+| OAuth callback fails | Manually copy auth token from browser |
+
+```bash
+# Run diagnostics
+ccs doctor
+
+# Reset configuration
+rm -rf ~/.ccs && ccs config
+```
+
+### Full Android Documentation
+
+See **[ANDROID.md](ANDROID.md)** for comprehensive Android/Termux guide including:
+- Detailed setup instructions
+- SSH remote access setup
+- Performance optimization
+- Known limitations
+- Workarounds for common issues
 
 <br>
 
@@ -280,6 +328,8 @@ MIT License - see [LICENSE](LICENSE).
 
 ---
 
-**[ccs.kaitran.ca](https://ccs.kaitran.ca)** | [Report Issues](https://github.com/kaitranntt/ccs/issues) | [Star on GitHub](https://github.com/kaitranntt/ccs)
+**[Android Guide](ANDROID.md)** | **[Original CCS](https://ccs.kaitran.ca)** | [Report Issues](https://github.com/zesbe/ccs-android-support/issues) | [Star on GitHub](https://github.com/zesbe/ccs-android-support)
+
+*This is a community fork adding Android/Termux support. For the original CCS, visit [kaitranntt/ccs](https://github.com/kaitranntt/ccs).*
 
 </div>

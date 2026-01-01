@@ -1,22 +1,25 @@
 {
-  "name": "@kaitranntt/ccs",
-  "version": "5.19.2",
-  "description": "Claude Code Switch - Instant profile switching between Claude Sonnet 4.5 and GLM 4.6",
+  "name": "@zesbe/ccs-android",
+  "version": "7.12.1-android.1",
+  "description": "CCS Android/Termux Support - Claude Code Switch with native Android platform support",
   "keywords": [
     "cli",
     "claude",
     "glm",
     "ai",
     "profile",
-    "switch"
+    "switch",
+    "android",
+    "termux",
+    "mobile"
   ],
-  "homepage": "https://github.com/kaitranntt/ccs",
+  "homepage": "https://github.com/zesbe/ccs-android-support",
   "bugs": {
-    "url": "https://github.com/kaitranntt/ccs/issues"
+    "url": "https://github.com/zesbe/ccs-android-support/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kaitranntt/ccs.git"
+    "url": "git+https://github.com/zesbe/ccs-android-support.git"
   },
   "license": "MIT",
   "author": {
@@ -46,7 +49,8 @@
   "os": [
     "darwin",
     "linux",
-    "win32"
+    "win32",
+    "android"
   ],
   "preferGlobal": true,
   "scripts": {
